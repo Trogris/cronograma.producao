@@ -1,4 +1,4 @@
-# Cronograma de Produção — Fiscaltech 2026
+# Cronograma de Produção
 
 Ferramenta interativa de planejamento de produção (Gantt, Análise de Capacidade e
 Previsto x Realizado), com sincronização opcional para uma planilha Google Sheets.
