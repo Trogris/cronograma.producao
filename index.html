@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma de Produção — Fiscaltech 2026</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #181c27; --surface2: #1e2333; --border: #2a3048;
+    --accent: #3b82f6; --accent-dim: #1e3a5f;
+    --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+    --green: #22c55e; --amber: #f59e0b; --red: #ef4444;
+    --c-radar:#3b82f6; --c-fad:#22c55e; --c-painel:#f59e0b;
+    --c-hswim:#a855f7; --c-freeflow:#06b6d4; --c-redundancia:#f97316;
+    --c-pwim:#ec4899; --c-lswin:#84cc16; --c-fwc:#2dd4bf;
+  }
+  :root[data-theme="light"] {
+    --bg:#f3f5fa; --surface:#ffffff; --surface2:#eef1f7; --border:#dde3ee;
+    --accent:#2f5fd0; --accent-dim:#e3ebfb;
+    --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
+    --green:#16a34a; --amber:#b45309; --red:#dc2626;
+    --c-radar:#2456c7; --c-fad:#15803d; --c-painel:#b45309;
+    --c-hswim:#7e22ce; --c-freeflow:#0e7490; --c-redundancia:#c2410c;
+    --c-pwim:#be185d; --c-lswin:#4d7c0f; --c-fwc:#0f766e;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:#f3f5fa; --surface:#ffffff; --surface2:#eef1f7; --border:#dde3ee;
+      --accent:#2f5fd0; --accent-dim:#e3ebfb;
+      --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
+      --green:#16a34a; --amber:#b45309; --red:#dc2626;
+      --c-radar:#2456c7; --c-fad:#15803d; --c-painel:#b45309;
+      --c-hswim:#7e22ce; --c-freeflow:#0e7490; --c-redundancia:#c2410c;
+      --c-pwim:#be185d; --c-lswin:#4d7c0f; --c-fwc:#0f766e;
+    }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter','Segoe UI',system-ui,sans-serif; font-size:13px; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* HEADER */
+  header { background:var(--surface); border-bottom:1px solid var(--border); padding:13px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:200; }
+  header h1 { font-size:14px; font-weight:700; letter-spacing:.4px; }
+  header .meta { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:600; background:var(--accent-dim); color:var(--accent); }
+  .toolbar { display:flex; gap:8px; align-items:center; }
+  .btn { padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); cursor:pointer; font-size:12px; transition:all .15s; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#2563eb; border-color:#2563eb; color:#fff; }
+  .btn-sm { padding:3px 9px; font-size:11px; }
+
+  /* TABS */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--surface); padding:0 20px; flex-shrink:0; }
+  .tab { padding:9px 18px; font-size:12px; font-weight:600; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; white-space:nowrap; }
+  .tab:hover { color:var(--text-dim); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* LAYOUT */
+  .layout { display:flex; flex:1; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:252px; min-width:252px; flex:0 0 252px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; transition:width .2s,min-width .2s,flex-basis .2s; }
+  .sidebar.collapsed { width:0 !important; min-width:0 !important; flex-basis:0 !important; border-right:none !important; }
+  .sidebar-header { padding:11px 14px 9px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .sidebar-title { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); }
+  .sidebar-actions { display:flex; gap:6px; align-items:center; }
+  .sidebar-close { width:24px; height:24px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sidebar-close:hover { border-color:var(--red); color:var(--red); }
+  .sidebar-close svg { width:13px; height:13px; }
+  .sidebar-search { padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .sidebar-search input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 10px; color:var(--text); font-size:12px; outline:none; }
+  .sidebar-search input:focus { border-color:var(--accent); }
+  .sidebar-search input::placeholder { color:var(--text-muted); }
+  .sidebar-filters { padding:8px 14px; border-bottom:1px solid var(--border); display:flex; gap:5px; flex-wrap:wrap; flex-shrink:0; }
+  .filter-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; border:1px solid var(--tc); color:var(--tc); background:color-mix(in srgb, var(--tc) 16%, transparent); cursor:pointer; transition:all .12s; opacity:.4; }
+  .filter-chip.active { opacity:1; }
+  .filter-chip-dot { width:7px; height:7px; border-radius:50%; }
+  .fc-Radar{--tc:var(--c-radar)} .fc-FAD{--tc:var(--c-fad)} .fc-Painel{--tc:var(--c-painel)}
+  .fc-HSWIM{--tc:var(--c-hswim)} .fc-FreeFlow{--tc:var(--c-freeflow)} .fc-Redundancia{--tc:var(--c-redundancia)}
+  .fc-PWIM{--tc:var(--c-pwim)} .fc-LSWIN{--tc:var(--c-lswin)} .fc-FWC{--tc:var(--c-fwc)}
+  .sidebar-status-filter { padding:6px 14px 8px; border-bottom:1px solid var(--border); display:flex; gap:5px; flex-wrap:wrap; flex-shrink:0; }
+  .st-chip { padding:2px 8px; border-radius:20px; font-size:9.5px; font-weight:700; white-space:nowrap; cursor:pointer; opacity:.4; border:1px solid transparent; transition:all .12s; }
+  .st-chip.active { opacity:1; }
+  .st-andamento{border-color:var(--green);color:var(--green);background:color-mix(in srgb, var(--green) 16%, transparent)}
+  .st-pendente{border-color:var(--amber);color:var(--amber);background:color-mix(in srgb, var(--amber) 16%, transparent)}
+  .st-concluido{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 16%, transparent)}
+  .st-carteira{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 16%, transparent)}
+  .st-prospeccao{border-color:var(--text-muted);color:var(--text-muted);background:color-mix(in srgb, var(--text-muted) 16%, transparent)}
+  .sidebar-list { overflow-y:auto; flex:1; padding:6px 0; }
+  .proj-item { display:flex; align-items:center; gap:9px; padding:7px 14px; cursor:pointer; transition:background .1s; border-left:3px solid transparent; }
+  .proj-item:hover { background:var(--surface2); }
+  .proj-item.selected { background:var(--accent-dim); border-left-color:var(--accent); }
+  .proj-item.hidden-item { display:none; }
+  .proj-del { opacity:0; background:none; border:none; color:var(--red); cursor:pointer; font-size:14px; padding:2px 4px; border-radius:4px; flex-shrink:0; transition:opacity .15s; line-height:1; }
+  .proj-item:hover .proj-del { opacity:1; }
+  .proj-del:hover { background:color-mix(in srgb, var(--red) 18%, transparent); }
+  .proj-cb { width:15px; height:15px; border-radius:3px; border:1.5px solid var(--border); background:var(--surface2); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+  .proj-item.selected .proj-cb { background:var(--accent); border-color:var(--accent); }
+  .proj-cb-check { color:#fff; font-size:10px; font-weight:700; display:none; }
+  .proj-item.selected .proj-cb-check { display:block; }
+  .proj-info { flex:1; min-width:0; }
+  .proj-name { font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .proj-meta { font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .proj-bar { width:4px; border-radius:2px; flex-shrink:0; align-self:stretch; }
+  .sidebar-footer { padding:9px 14px; border-top:1px solid var(--border); flex-shrink:0; font-size:11px; color:var(--text-muted); display:flex; align-items:center; justify-content:space-between; }
+
+  /* MAIN */
+  .main { flex:1; overflow:auto; padding:16px 20px; }
+  .tab-panel { display:none; } .tab-panel.active { display:block; }
+
+  /* ANÁLISE BAR */
+  .analysis-bar { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 16px; margin-bottom:14px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+  .an-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+  .an-val { font-size:20px; font-weight:800; letter-spacing:-1px; color:var(--text); }
+  .an-sub { font-size:11px; color:var(--text-muted); }
+  .an-divider { width:1px; height:34px; background:var(--border); }
+  .minibar-wrap { display:flex; gap:3px; align-items:flex-end; height:30px; }
+  .minibar { width:7px; border-radius:2px 2px 0 0; background:var(--accent); min-height:2px; }
+  .section-title { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
+
+  /* GANTT TABLE */
+  .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  table { border-collapse:collapse; min-width:100%; font-size:12px; }
+  thead tr.months th { background:var(--surface2); border-bottom:1px solid var(--border); color:var(--text-dim); font-weight:700; font-size:11px; letter-spacing:.5px; padding:7px 5px; text-align:center; white-space:nowrap; }
+  thead tr.months th.meta-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); }
+  thead tr.weeks th { background:var(--surface); border-bottom:2px solid var(--border); color:var(--text-muted); font-weight:600; font-size:10px; padding:5px 4px; text-align:center; white-space:nowrap; }
+  thead tr.weeks th.meta-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); }
+  th.semana-atual { color:var(--accent)!important; border-bottom:2px solid var(--accent)!important; background:var(--accent-dim)!important; }
+  th.feriado { background:color-mix(in srgb, var(--red) 22%, var(--surface2))!important; color:var(--red)!important; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:var(--surface2); }
+  tbody tr.total-row { background:var(--surface2); border-top:2px solid var(--border); font-weight:700; color:var(--text-dim); }
+  tbody tr.total-row:hover { background:var(--surface2); }
+  td { padding:6px 5px; white-space:nowrap; }
+  td.meta-col { border-right:1px solid var(--border); background:var(--surface); }
+  tbody tr:hover td.meta-col { background:var(--surface2); }
+  td.col-num { width:32px; min-width:32px; text-align:center; }
+  td.col-proj { min-width:165px; font-weight:600; color:var(--text); }
+  td.col-tipo { min-width:92px; }
+  td.col-cliente { min-width:108px; color:var(--text-dim); }
+  td.col-status { min-width:86px; }
+  td.col-un { min-width:40px; text-align:right; font-variant-numeric:tabular-nums; color:var(--text-dim); }
+  td.col-contrato { min-width:86px; }
+  td.col-week { min-width:32px; width:32px; text-align:center; font-variant-numeric:tabular-nums; font-size:11px; }
+  td.col-total { font-weight:700; color:var(--text-dim); min-width:42px; text-align:right; padding-right:8px; border-left:1px solid var(--border); }
+  [contenteditable="true"] { outline:none; cursor:text; }
+  [contenteditable="true"]:focus { background:var(--accent-dim)!important; border-radius:3px; outline:1px solid var(--accent); }
+  .chip { display:inline-block; padding:2px 5px; border-radius:4px; font-size:10px; font-weight:700; background:color-mix(in srgb, var(--tc) 26%, var(--surface2)); color:var(--tc); }
+  .chip-Radar{--tc:var(--c-radar)} .chip-FAD{--tc:var(--c-fad)} .chip-Painel{--tc:var(--c-painel)} .chip-HSWIM{--tc:var(--c-hswim)}
+  .chip-FreeFlow{--tc:var(--c-freeflow)} .chip-Redundancia{--tc:var(--c-redundancia)} .chip-PWIM{--tc:var(--c-pwim)}
+  .chip-LSWIN{--tc:var(--c-lswin)} .chip-FWC{--tc:var(--c-fwc)}
+  .status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600}
+  .status::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .status-andamento::before{background:var(--green)} .status-andamento{color:var(--green)}
+  .status-pendente::before{background:var(--amber)} .status-pendente{color:var(--amber)}
+  .contrato-carteira{color:var(--accent);font-size:10px;font-weight:700}
+  .contrato-prospeccao{color:var(--text-muted);font-size:10px;font-weight:700}
+  td.has-value{font-weight:700;color:var(--text);position:relative}
+  td.has-value::after{content:'';position:absolute;bottom:0;left:3px;right:3px;height:2px;border-radius:2px}
+  tr.t-Radar td.has-value::after{background:var(--c-radar)} tr.t-FAD td.has-value::after{background:var(--c-fad)}
+  tr.t-Painel td.has-value::after{background:var(--c-painel)} tr.t-HSWIM td.has-value::after{background:var(--c-hswim)}
+  tr.t-FreeFlow td.has-value::after{background:var(--c-freeflow)} tr.t-Redundancia td.has-value::after{background:var(--c-redundancia)}
+  tr.t-PWIM td.has-value::after{background:var(--c-pwim)} tr.t-LSWIN td.has-value::after{background:var(--c-lswin)}
+  tr.t-FWC td.has-value::after{background:var(--c-fwc)}
+  .proj-row-hidden { display:none; }
+
+  /* selects inline (tipo/status editáveis) */
+  .inline-select { appearance:none; -webkit-appearance:none; border:1px solid transparent; border-radius:4px;
+    font-size:10px; font-weight:700; font-family:inherit; cursor:pointer; padding:2px 18px 2px 6px; outline:none;
+    background-repeat:no-repeat; background-position:right 5px center; background-size:8px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .inline-select:hover { border-color:var(--border2, var(--border)); }
+  .inline-select:focus { border-color:var(--accent); }
+  .tipo-select { background-color:color-mix(in srgb, var(--tc) 26%, var(--surface2)); color:var(--tc); }
+  .tipo-select option { color:#161a24; background:#fff; }
+  .status-select.st-andamento-bg { background-color:color-mix(in srgb, var(--green) 20%, transparent); color:var(--green); }
+  .status-select.st-pendente-bg { background-color:color-mix(in srgb, var(--amber) 20%, transparent); color:var(--amber); }
+  .status-select.st-concluido-bg { background-color:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--accent); }
+  .contrato-select { background-color:transparent; color:var(--accent); font-weight:700; }
+  .contrato-select.ct-prospeccao { color:var(--text-muted); }
+  .contrato-select option { color:#161a24; background:#fff; }
+  .status-select option { color:#161a24; background:#fff; }
+
+  /* ── ABA CAPACIDADE ── */
+  .cap-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
+  .cap-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; position:relative; overflow:hidden; }
+  .cap-card-accent { position:absolute; top:0; left:0; width:4px; height:100%; border-radius:4px 0 0 4px; }
+  .cap-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+  .cap-total { font-size:24px; font-weight:800; letter-spacing:-1px; }
+  .cap-cap { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .cap-bar-bg { height:4px; background:var(--border); border-radius:2px; margin-top:10px; }
+  .cap-bar-fill { height:4px; border-radius:2px; transition:width .4s; }
+  .cap-status { font-size:10px; font-weight:700; margin-top:8px; padding:2px 7px; border-radius:4px; display:inline-block; }
+  .st-sobrecarga{background:color-mix(in srgb, var(--red) 20%, var(--surface2));color:var(--red)} .st-atencao{background:color-mix(in srgb, var(--amber) 20%, var(--surface2));color:var(--amber)}
+  .st-normal{background:color-mix(in srgb, var(--green) 20%, var(--surface2));color:var(--green)} .st-vazio{background:var(--surface2);color:var(--text-muted)}
+  .cap-edit { position:absolute; top:10px; right:10px; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; opacity:0; transition:opacity .15s; }
+  .cap-card:hover .cap-edit { opacity:1; }
+
+  /* tabela de capacidade semanal */
+  .cap-table-wrap { border:1px solid var(--border); border-radius:10px; overflow-x:auto; background:var(--surface); margin-bottom:20px; }
+  .cap-table-wrap table thead tr th { background:var(--surface2); border-bottom:1px solid var(--border); color:var(--text-dim); font-size:10px; font-weight:700; padding:6px 5px; text-align:center; white-space:nowrap; letter-spacing:.4px; }
+  .cap-table-wrap table thead tr th.tipo-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); min-width:120px; }
+  .cap-table-wrap table thead tr th.cap-col { border-right:1px solid var(--border); min-width:52px; }
+  .cap-table-wrap table tbody tr { border-bottom:1px solid var(--border); }
+  .cap-table-wrap table tbody tr:last-child { border-bottom:none; }
+  .cap-table-wrap table tbody tr:hover { background:var(--surface2); }
+  .cap-table-wrap table tbody td { padding:6px 5px; text-align:center; font-size:11px; font-variant-numeric:tabular-nums; }
+  .cap-table-wrap table tbody td.tipo-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); font-weight:600; }
+  .cap-table-wrap table tbody td.cap-col { border-right:1px solid var(--border); font-weight:700; color:var(--text-dim); }
+  .cap-table-wrap table tbody td.over { color:var(--red); font-weight:800; }
+  .cap-table-wrap table tbody td.warn { color:var(--amber); font-weight:700; }
+  .cap-table-wrap table tbody tr.total-row { background:var(--surface2); border-top:2px solid var(--border); font-weight:700; }
+  .ocupacao-row td { background:var(--surface2); }
+  .occ-cell { font-size:10px; }
+  .occ-ok{color:var(--green)} .occ-warn{color:var(--amber)} .occ-over{color:var(--red)}
+
+  /* ── ABA EVOLUÇÃO (previsto x realizado) ── */
+  .evo-toolbar { margin-bottom:14px; max-width:340px; }
+  .evo-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:20px; }
+  .evo-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .evo-stat-lbl { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+  .evo-stat-val { font-size:21px; font-weight:800; letter-spacing:-.5px; }
+  .evo-stat-sub { font-size:10.5px; color:var(--text-muted); margin-top:2px; }
+  .evo-stat.gap-neg .evo-stat-val { color:var(--red); }
+  .evo-stat.gap-pos .evo-stat-val { color:var(--green); }
+  .evo-chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .evo-chart-card svg { width:100%; height:auto; overflow:visible; }
+  .evo-axis-label { font-size:10px; fill:var(--text-muted); }
+  .evo-grid-line { stroke:var(--border); stroke-width:1; }
+  .evo-gap-area { opacity:.14; }
+  .evo-gap-neg { fill:var(--red); }
+  .evo-gap-pos { fill:var(--green); }
+  .evo-today-line { stroke:var(--text-muted); stroke-width:1; stroke-dasharray:3 3; }
+  .evo-line-prev { fill:none; stroke:var(--accent); stroke-width:2.25; stroke-linecap:round; stroke-linejoin:round; }
+  .evo-line-real { fill:none; stroke:var(--green); stroke-width:2.25; stroke-linecap:round; stroke-linejoin:round; }
+  .evo-pt-prev { fill:var(--accent); }
+  .evo-pt-real { fill:var(--green); }
+  .evo-legend { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--text-dim); }
+  .evo-legend .leg { display:flex; align-items:center; gap:6px; }
+  .evo-legend .leg-line { width:14px; height:3px; border-radius:2px; }
+  .evo-legend .leg-dot-line { width:14px; height:0; border-top:1px dashed var(--text-muted); }
+  .evo-empty { background:var(--surface); border:1px dashed var(--border); border-radius:10px; padding:24px; text-align:center; color:var(--text-muted); font-size:12.5px; }
+  #evo-ranking-wrap { margin-top:18px; }
+  .evo-ranking { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .evo-rk-row { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--border); font-size:12px; }
+  .evo-rk-row:last-child { border-bottom:none; }
+  .evo-rk-row:hover { background:var(--surface2); }
+  .evo-rk-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+  .evo-rk-bar-wrap { width:120px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; flex-shrink:0; position:relative; }
+  .evo-rk-bar { height:100%; border-radius:3px; }
+  .evo-rk-val { width:92px; flex-shrink:0; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+  .evo-rk-val.neg { color:var(--red); }
+  .evo-rk-val.pos { color:var(--green); }
+  .evo-rk-val.zero { color:var(--text-muted); }
+  .evo-rk-empty { padding:16px; text-align:center; color:var(--text-muted); font-size:12px; }
+
+  #toast { position:fixed; bottom:18px; right:18px; background:var(--green); color:#fff; padding:8px 15px; border-radius:8px; font-size:13px; font-weight:600; opacity:0; transform:translateY(8px); transition:all .22s; pointer-events:none; z-index:999; }
+  #toast.show { opacity:1; transform:translateY(0); }
+
+  /* MODAL */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:500; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .modal-backdrop.open { opacity:1; pointer-events:all; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:520px; max-width:95vw; padding:0; overflow:hidden; transform:translateY(10px); transition:transform .2s; }
+  .modal-backdrop.open .modal { transform:translateY(0); }
+  .modal-header { padding:16px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-size:14px; font-weight:700; color:var(--text); }
+  .modal-close { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; padding:2px 6px; border-radius:4px; }
+  .modal-close:hover { color:var(--text); background:var(--surface2); }
+  .modal-body { padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
+  .modal-body .full { grid-column:1/-1; }
+  .field-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+  .field-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+  .field-input:focus { border-color:var(--accent); }
+  .field-input option { background:var(--surface2); }
+  .modal-footer { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+  /* linha nova piscando */
+  @keyframes rowHighlight { from{background:var(--accent-dim)} to{background:transparent} }
+  .new-row-flash { animation: rowHighlight 1.2s ease-out; }
+
+  /* toggle de tema */
+  .theme-toggle {
+    width:28px; height:28px; border-radius:6px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0;
+  }
+  .theme-toggle:hover { border-color:var(--accent); color:var(--accent); }
+  .theme-toggle svg { width:15px; height:15px; }
+  .ico { width:13px; height:13px; flex-shrink:0; vertical-align:-2.5px; margin-right:1px; }
+  .btn .ico { margin-right:3px; }
+  .tab .ico { margin-right:5px; vertical-align:-2px; }
+  .toast-row { display:inline-flex; align-items:center; gap:6px; }
+  :root[data-theme="light"] .theme-toggle .icon-moon,
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display:none; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .theme-toggle .icon-moon { display:none; }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .theme-toggle .icon-sun { display:block; }
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 640px) {
+    /* Header compacto */
+    header { padding:10px 12px; flex-wrap:wrap; gap:6px; }
+    header h1 { font-size:12px; }
+    header .meta { font-size:10px; display:none; }
+    #sidebar-label { display:none; }
+    .toolbar { gap:5px; flex-wrap:wrap; justify-content:flex-end; }
+    .btn-sm { padding:5px 8px; font-size:11px; }
+    #gs-status { flex-basis:100%; text-align:right; white-space:normal; }
+
+    /* Tabs */
+    .tabs { padding:0 8px; overflow-x:auto; }
+    .tab { padding:8px 12px; font-size:11px; }
+
+    /* Sidebar vira drawer bottom no mobile */
+    .layout { flex-direction:column; overflow:visible; }
+    .sidebar {
+      position:fixed; bottom:0; left:0; right:0; z-index:300;
+      width:100% !important; min-width:0 !important;
+      height:60vh; border-right:none;
+      border-top:1px solid var(--border);
+      border-radius:14px 14px 0 0;
+      transform:translateY(100%);
+      transition:transform .25s ease;
+    }
+    .sidebar.mobile-open {
+      transform:translateY(0);
+    }
+    .sidebar.collapsed { transform:translateY(100%); width:100% !important; }
+    /* Overlay atrás do drawer */
+    .sidebar-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:299;
+    }
+    .sidebar-overlay.active { display:block; }
+
+    /* Main ocupa tudo */
+    .main { overflow:auto; padding:10px 10px; }
+
+    /* Análise bar empilhada */
+    .analysis-bar { gap:12px; padding:10px 12px; flex-wrap:wrap; overflow-x:auto; }
+    .an-divider { display:none; }
+    .an-val { font-size:16px; }
+    .minibar-wrap { display:none; }
+
+    /* Gantt: scroll horizontal nativo, sem limite */
+    .table-wrap { border-radius:7px; }
+    table { font-size:11px; }
+    td { padding:5px 3px; }
+    td.col-proj { min-width:130px; }
+    td.col-cliente { min-width:90px; }
+    td.col-week { min-width:28px; width:28px; font-size:10px; }
+
+    /* Cards capacidade: 2 colunas */
+    .cap-grid { grid-template-columns:1fr 1fr !important; gap:8px; }
+    .cap-total { font-size:18px; }
+
+    /* Modal full-screen */
+    .modal { width:100%; max-width:100%; border-radius:14px 14px 0 0; position:fixed; bottom:0; left:0; right:0; }
+    .modal-backdrop { align-items:flex-end; }
+    .modal-body { grid-template-columns:1fr; }
+    .modal-body .full { grid-column:1; }
+
+    /* Seção títulos menores */
+    .section-title { font-size:10px; }
+
+    /* Sidebar header: botões não podem estourar a largura */
+    .sidebar-header { flex-wrap:wrap; gap:6px; }
+    .sidebar-actions { flex-wrap:wrap; }
+
+    /* Evolução: tudo empilha e nada fica com largura fixa grande demais */
+    .evo-toolbar .field { min-width:0 !important; width:100%; }
+    .evo-stats { grid-template-columns:1fr 1fr; gap:8px; }
+    .evo-stat { padding:9px 10px; }
+    .evo-stat-val { font-size:16px; }
+    .evo-chart-card { padding:10px; }
+    .evo-legend { gap:8px 12px; font-size:10px; }
+    .evo-rk-row { padding:7px 10px; gap:6px; font-size:11px; }
+    .evo-rk-bar-wrap { width:56px; }
+    .evo-rk-val { width:62px; font-size:10.5px; }
+
+    /* Cabeçalho da tabela do Gantt: reduzir para caber melhor */
+    thead tr.months th { font-size:9px; padding:5px 3px; }
+    thead tr.weeks th { font-size:9px; padding:4px 2px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>CRONOGRAMA DE PRODUÇÃO — FISCALTECH 2026</h1>
+    <div class="meta">Atualizado: 18/07/2026 · S01–S52 · Semana atual: <span class="badge">S28</span></div>
+  </div>
+  <div class="toolbar">
+    <button class="theme-toggle" id="btn-theme" title="Alternar tema claro/escuro" onclick="toggleTheme()">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="btn btn-sm" id="btn-toggle-sidebar" title="Mostrar/ocultar painel" style="padding:5px 10px">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span id="sidebar-label" style="font-size:11px">Projetos</span>
+    </button>
+    <button class="btn btn-sm" onclick="exportCSV()">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV
+    </button>
+    <button class="btn btn-sm" style="border-color:var(--green);color:var(--green)" onclick="openModal()">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo projeto
+    </button>
+    <span id="gs-status" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;white-space:nowrap"></span>
+    <button class="btn btn-primary btn-sm" onclick="sheetsSalvar()">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar no Sheets
+    </button>
+  </div>
+</header>
+
+<!-- ABAS -->
+<div class="tabs">
+  <div class="tab active" data-tab="gantt" onclick="switchTab('gantt')">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>Gantt de Produção
+  </div>
+  <div class="tab" data-tab="capacidade" onclick="switchTab('capacidade')">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Análise de Capacidade
+  </div>
+  <div class="tab" data-tab="evolucao" onclick="switchTab('evolucao')">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg>Previsto vs Realizado
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="layout">
+
+  <!-- SIDEBAR (compartilhada) -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Projetos</span>
+      <div class="sidebar-actions">
+        <button class="btn btn-sm" onclick="selectAll()">Todos</button>
+        <button class="btn btn-sm" onclick="selectNone()">Nenhum</button>
+        <button class="sidebar-close" onclick="closeSidebar()" title="Fechar painel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="search-input" placeholder="Buscar projeto ou cliente…" oninput="applyFilters()">
+    </div>
+    <div class="sidebar-filters" id="tipo-filters"></div>
+    <div class="sidebar-status-filter">
+      <span class="st-chip st-andamento active" data-st="andamento" onclick="toggleStatus(this)">Em andamento</span>
+      <span class="st-chip st-pendente active" data-st="pendente" onclick="toggleStatus(this)">Pendente</span>
+      <span class="st-chip st-concluido active" data-st="concluido" onclick="toggleStatus(this)">Concluído</span>
+    </div>
+    <div class="sidebar-status-filter">
+      <span class="st-chip st-carteira active" data-ct="carteira" onclick="toggleContrato(this)">Em carteira</span>
+      <span class="st-chip st-prospeccao active" data-ct="prospeccao" onclick="toggleContrato(this)">Prospecção</span>
+    </div>
+    <div class="sidebar-list" id="proj-list"></div>
+    <div class="sidebar-footer">
+      <span id="sel-count">0 selecionados</span>
+      <span id="sel-un">0 un.</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ABA GANTT -->
+    <div class="tab-panel active" id="panel-gantt">
+      <div class="analysis-bar">
+        <div class="an-stat"><div class="an-label">Projetos</div><div class="an-val" id="an-proj">—</div></div>
+        <div class="an-divider"></div>
+        <div class="an-stat"><div class="an-label">Unidades</div><div class="an-val" id="an-un">—</div></div>
+        <div class="an-divider"></div>
+        <div class="an-stat"><div class="an-label">Pico semanal</div><div class="an-val" id="an-pico">—</div><div class="an-sub" id="an-pico-sem"></div></div>
+        <div class="an-divider"></div>
+        <div class="an-stat"><div class="an-label">Semanas ativas</div><div class="an-val" id="an-sems">—</div></div>
+        <div class="an-divider"></div>
+        <div class="an-stat"><div class="an-label">Distribuição semanal</div><div class="minibar-wrap" id="minibar"></div></div>
+      </div>
+
+      <div class="section-title">Gantt de Produção</div>
+      <div class="table-wrap">
+        <table id="gantt-table">
+          <thead>
+            <tr class="months">
+              <th class="meta-col" colspan="7">&nbsp;</th>
+              <th colspan="4">JANEIRO 2026</th><th colspan="4">FEVEREIRO 2026</th><th colspan="5">MARÇO 2026</th><th colspan="4">ABRIL 2026</th><th colspan="4">MAIO 2026</th><th colspan="5">JUNHO 2026</th><th colspan="4">JULHO 2026</th><th colspan="5">AGOSTO 2026</th><th colspan="4">SETEMBRO 2026</th><th colspan="4">OUTUBRO 2026</th><th colspan="5">NOVEMBRO 2026</th><th colspan="4">DEZEMBRO 2026</th>
+            </tr>
+            <tr class="weeks">
+              <th class="meta-col col-num">#</th>
+              <th class="meta-col col-proj">Projeto</th>
+              <th class="meta-col col-tipo">Tipo</th>
+              <th class="meta-col col-cliente">Cliente</th>
+              <th class="meta-col col-status">Status</th>
+              <th class="meta-col col-un">Un.</th>
+              <th class="meta-col col-contrato">Contrato</th>
+              <th>S01<br><small style="color:var(--text-muted)">05/01</small></th>
+              <th>S02<br><small style="color:var(--text-muted)">12/01</small></th>
+              <th>S03<br><small style="color:var(--text-muted)">19/01</small></th>
+              <th>S04<br><small style="color:var(--text-muted)">26/01</small></th>
+              <th>S05<br><small style="color:var(--text-muted)">02/02</small></th>
+              <th>S06<br><small style="color:var(--text-muted)">09/02</small></th>
+              <th>S07<br><small style="color:var(--text-muted)">16/02</small></th>
+              <th>S08<br><small style="color:var(--text-muted)">23/02</small></th>
+              <th>S09<br><small style="color:var(--text-muted)">02/03</small></th>
+              <th>S10<br><small style="color:var(--text-muted)">09/03</small></th>
+              <th>S11<br><small style="color:var(--text-muted)">16/03</small></th>
+              <th>S12<br><small style="color:var(--text-muted)">23/03</small></th>
+              <th>S13<br><small style="color:var(--text-muted)">30/03</small></th>
+              <th>S14<br><small style="color:var(--text-muted)">06/04</small></th>
+              <th>S15<br><small style="color:var(--text-muted)">13/04</small></th>
+              <th>S16<br><small style="color:var(--text-muted)">20/04</small></th>
+              <th>S17<br><small style="color:var(--text-muted)">27/04</small></th>
+              <th>S18<br><small style="color:var(--text-muted)">04/05</small></th>
+              <th>S19<br><small style="color:var(--text-muted)">11/05</small></th>
+              <th>S20<br><small style="color:var(--text-muted)">18/05</small></th>
+              <th>S21<br><small style="color:var(--text-muted)">25/05</small></th>
+              <th>S22<br><small style="color:var(--text-muted)">01/06</small></th>
+              <th>S23<br><small style="color:var(--text-muted)">08/06</small></th>
+              <th>S24<br><small style="color:var(--text-muted)">15/06</small></th>
+              <th>S25<br><small style="color:var(--text-muted)">22/06</small></th>
+              <th>S26<br><small style="color:var(--text-muted)">29/06</small></th>
+              <th>S27<br><small style="color:var(--text-muted)">06/07</small></th>
+              <th class="semana-atual">S28<br><small>13/07</small></th>
+              <th>S29<br><small style="color:var(--text-muted)">20/07</small></th>
+              <th>S30<br><small style="color:var(--text-muted)">27/07</small></th>
+              <th>S31<br><small style="color:var(--text-muted)">03/08</small></th>
+              <th>S32<br><small style="color:var(--text-muted)">10/08</small></th>
+              <th>S33<br><small style="color:var(--text-muted)">17/08</small></th>
+              <th>S34<br><small style="color:var(--text-muted)">24/08</small></th>
+              <th>S35<br><small style="color:var(--text-muted)">31/08</small></th>
+              <th>S36<br><small style="color:var(--text-muted)">07/09</small></th>
+              <th>S37<br><small style="color:var(--text-muted)">14/09</small></th>
+              <th>S38<br><small style="color:var(--text-muted)">21/09</small></th>
+              <th>S39<br><small style="color:var(--text-muted)">28/09</small></th>
+              <th>S40<br><small style="color:var(--text-muted)">05/10</small></th>
+              <th>S41<br><small style="color:var(--text-muted)">12/10</small></th>
+              <th>S42<br><small style="color:var(--text-muted)">19/10</small></th>
+              <th>S43<br><small style="color:var(--text-muted)">26/10</small></th>
+              <th>S44<br><small style="color:var(--text-muted)">02/11</small></th>
+              <th>S45<br><small style="color:var(--text-muted)">09/11</small></th>
+              <th>S46<br><small style="color:var(--text-muted)">16/11</small></th>
+              <th>S47<br><small style="color:var(--text-muted)">23/11</small></th>
+              <th class="feriado">S48<br><small>30/11</small></th>
+              <th>S49<br><small style="color:var(--text-muted)">07/12</small></th>
+              <th>S50<br><small style="color:var(--text-muted)">14/12</small></th>
+              <th>S51<br><small style="color:var(--text-muted)">21/12</small></th>
+              <th class="feriado">S52<br><small>28/12</small></th>
+            </tr>
+          </thead>
+          <tbody id="gantt-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABA CAPACIDADE -->
+    <div class="tab-panel" id="panel-capacidade">
+      <div class="section-title" style="margin-bottom:14px">Resumo por tipo de produto</div>
+      <div class="cap-grid" id="cap-grid"></div>
+
+      <div class="section-title">Produção semanal por tipo — baseada na seleção atual</div>
+      <div class="cap-table-wrap">
+        <table id="cap-table">
+          <thead>
+            <tr>
+              <th class="tipo-col">Tipo</th>
+              <th class="cap-col">Cap/sem</th>
+              <th>S01</th><th>S02</th><th>S03</th><th>S04</th><th>S05</th><th>S06</th><th>S07</th>
+              <th>S08</th><th>S09</th><th>S10</th><th>S11</th><th>S12</th><th>S13</th><th>S14</th>
+              <th>S15</th><th>S16</th><th>S17</th><th>S18</th><th>S19</th><th>S20</th><th>S21</th>
+              <th>S22</th><th>S23</th><th>S24</th><th>S25</th><th>S26</th><th>S27</th><th>S28</th>
+              <th>S29</th><th>S30</th><th>S31</th><th>S32</th><th>S33</th><th>S34</th><th>S35</th>
+              <th>S36</th><th>S37</th><th>S38</th><th>S39</th><th>S40</th><th>S41</th><th>S42</th>
+              <th>S43</th><th>S44</th><th>S45</th><th>S46</th><th>S47</th><th>S48</th><th>S49</th>
+              <th>S50</th><th>S51</th><th>S52</th>
+              <th style="border-left:1px solid var(--border)">Total</th>
+            </tr>
+          </thead>
+          <tbody id="cap-body"></tbody>
+        </table>
+      </div>
+
+      <div class="section-title">% Ocupação da capacidade por semana</div>
+      <div class="cap-table-wrap">
+        <table id="occ-table">
+          <thead>
+            <tr>
+              <th class="tipo-col">Semana</th>
+              <th>S01</th><th>S02</th><th>S03</th><th>S04</th><th>S05</th><th>S06</th><th>S07</th>
+              <th>S08</th><th>S09</th><th>S10</th><th>S11</th><th>S12</th><th>S13</th><th>S14</th>
+              <th>S15</th><th>S16</th><th>S17</th><th>S18</th><th>S19</th><th>S20</th><th>S21</th>
+              <th>S22</th><th>S23</th><th>S24</th><th>S25</th><th>S26</th><th>S27</th><th>S28</th>
+              <th>S29</th><th>S30</th><th>S31</th><th>S32</th><th>S33</th><th>S34</th><th>S35</th>
+              <th>S36</th><th>S37</th><th>S38</th><th>S39</th><th>S40</th><th>S41</th><th>S42</th>
+              <th>S43</th><th>S44</th><th>S45</th><th>S46</th><th>S47</th><th>S48</th><th>S49</th>
+              <th>S50</th><th>S51</th><th>S52</th>
+            </tr>
+          </thead>
+          <tbody id="occ-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABA EVOLUÇÃO -->
+    <div class="tab-panel" id="panel-evolucao">
+      <div class="evo-toolbar">
+        <div class="field" style="margin:0;min-width:260px">
+          <div class="field-label">Ver</div>
+          <select class="field-input" id="evo-select" onchange="renderEvolucao()">
+            <option value="__todos__">Todos os projetos (carteira)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="evo-stats" id="evo-stats"></div>
+
+      <div class="section-title">Produção acumulada — previsto x realizado</div>
+      <div class="evo-chart-card">
+        <div id="evo-chart"></div>
+        <div class="evo-legend">
+          <span class="leg"><span class="leg-line" style="background:var(--accent)"></span>Previsto (acumulado)</span>
+          <span class="leg"><span class="leg-line" style="background:var(--green)"></span>Realizado (acumulado)</span>
+          <span class="leg"><span class="leg-dot-line"></span>Mês atual</span>
+          <span class="leg"><span class="leg-line" style="background:var(--red);opacity:.5"></span>Área = atrasado</span>
+          <span class="leg"><span class="leg-line" style="background:var(--green);opacity:.5"></span>Área = adiantado</span>
+        </div>
+      </div>
+      <div id="evo-ranking-wrap">
+        <div class="section-title">Quem está atrasado</div>
+        <div class="evo-ranking" id="evo-ranking"></div>
+      </div>
+      <div class="evo-empty" id="evo-empty" style="display:none">Este projeto ainda está em prospecção — não há execução (previsto x realizado) para comparar.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Novo projeto</span>
+      <button class="modal-close" onclick="closeModal()"><svg class="ico" style="width:14px;height:14px;margin:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="full">
+        <div class="field-label">Nome do projeto</div>
+        <input class="field-input" id="f-nome" placeholder="Ex: GOINFRA / Radar CEV" />
+      </div>
+      <div>
+        <div class="field-label">Tipo</div>
+        <select class="field-input" id="f-tipo">
+          <option>Radar</option>
+          <option>FAD</option>
+          <option>Painel Solar</option>
+          <option>HSWIM</option>
+          <option>Free Flow</option>
+          <option>Redundancia</option>
+          <option>PWIM</option>
+          <option>LSWIN</option>
+          <option>FWC</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">Cliente</div>
+        <input class="field-input" id="f-cliente" placeholder="Nome do cliente" />
+      </div>
+      <div>
+        <div class="field-label">Status</div>
+        <select class="field-input" id="f-status">
+          <option value="Em andamento">Em andamento</option>
+          <option value="Pendente" selected>Pendente</option>
+          <option value="Concluído">Concluído</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">Contrato</div>
+        <select class="field-input" id="f-contrato">
+          <option>Em Carteira</option>
+          <option>Prospecção</option>
+        </select>
+      </div>
+      <div class="full">
+        <div class="field-label">Semanas de produção <span style="color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">— informe semana e quantidade separados por vírgula, uma por linha (ex: S27, 20). Un. total é calculado automaticamente pela soma.</span></div>
+        <textarea class="field-input" id="f-prod" rows="4" placeholder="S27, 20&#10;S28, 15&#10;S29, 30" style="resize:vertical;font-family:monospace;font-size:12px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addProject()">Adicionar projeto</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+const WEBAPP_URL  = 'https://script.google.com/macros/s/AKfycbzae04VjBiX-xLMXOgTbOcBozMBFN-byiKUAXaDHxb9z9PmI6kwatM5H25fuwsgeN5R/exec';
+const SHEET_NAME  = 'Projetos';
+const SEMANAS = ['S01','S02','S03','S04','S05','S06','S07','S08','S09','S10','S11','S12','S13','S14','S15','S16','S17','S18','S19','S20','S21','S22','S23','S24','S25','S26','S27','S28','S29','S30','S31','S32','S33','S34','S35','S36','S37','S38','S39','S40','S41','S42','S43','S44','S45','S46','S47','S48','S49','S50','S51','S52'];
+
+const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
+const SEMANA_ATUAL = 'S28';
+const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
+
+const ICONS = {
+  check: '<svg class="ico" style="width:10px;height:10px;margin:0;vertical-align:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x: '<svg class="ico" style="width:11px;height:11px;margin:0;vertical-align:-1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  alert: '<svg class="ico" style="width:12px;height:12px;margin:0;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+};
+const TIPO_KEY = {'Radar':'Radar','FAD':'FAD','Painel Solar':'Painel','HSWIM':'HSWIM','Free Flow':'FreeFlow','Redundancia':'Redundancia','PWIM':'PWIM','LSWIN':'LSWIN','FWC':'FWC','FreeFlow':'FreeFlow'};
+const TIPO_COR = {'Radar':'var(--c-radar)','FAD':'var(--c-fad)','Painel Solar':'var(--c-painel)','HSWIM':'var(--c-hswim)','Free Flow':'var(--c-freeflow)','Redundancia':'var(--c-redundancia)','PWIM':'var(--c-pwim)','LSWIN':'var(--c-lswin)','FWC':'var(--c-fwc)'};
+
+// Fonte: FM.PRD.001 (Em Carteira, aba Produção 2026, linha "Prev", ano inteiro S01-S52) + Cronograma_Fiscaltech.xlsx (Prospecção).
+// prod = Previsto, editável célula a célula — é a única fonte usada por Un., Capacidade e o Previsto da aba Evolução.
+// realAno = Realizado, histórico de referência (linha "Real" do FM.PRD.001), usado só na aba Evolução.
+// Un. = soma das semanas de produção da linha (ver recalcGantt) — nunca editar Un. direto, ele é derivado.
+const PROJETOS = [
+  {num:'1.0', nome:'EPR FREE FLOW - LOTE 04', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S02:2, S03:3, S04:3, S14:2, S15:3}, realAno:{S02:2, S03:3, S04:3, S16:4}},
+  {num:'2.0', nome:'EIXO / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S01:6}, realAno:{S01:6}},
+  {num:'3.0', nome:'ENTREVIAS / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Entrevias', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S01:3}, realAno:{S01:3}},
+  {num:'4.0', nome:'GOINFRA / FSC300 LASER / FSC110', tipo:'Radar', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S03:5, S04:10, S08:16, S11:14, S15:14, S19:17, S25:20, S26:15, S31:23, S35:16, S40:15, S44:15}, realAno:{S03:3, S04:4, S06:12, S14:20, S16:10, S20:4, S22:9, S25:26, S26:3, S28:9}},
+  {num:'5.0', nome:'GOINFRA / PAINEL SOLAR', tipo:'Painel Solar', cliente:'GOINFRA', status:'Em andamento', un:30, contrato:'Em Carteira', prod:{S20:10, S25:10, S26:10}, realAno:{S20:2, S25:11}},
+  {num:'6.0', nome:'GOINFRA / FAD', tipo:'FAD', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S21:1, S26:30, S27:40, S28:40, S29:40, S30:29}, realAno:{S21:1, S26:6}},
+  {num:'7.0', nome:'EPR IGUAÇU / FSC110 REV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S05:6}, realAno:{S05:6}},
+  {num:'8.0', nome:'EPR IGUAÇU / FSC110 CEV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'9.0', nome:'EPR IGUAÇU / PAINEL SOLAR', tipo:'Painel Solar', cliente:'EPR Iguaçu', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S05:2}, realAno:{S05:2, S12:3}},
+  {num:'10.0', nome:'EPR VIA MINEIRA / HSWIM', tipo:'HSWIM', cliente:'EPR Via Mineira', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S06:1}, realAno:{S10:1}},
+  {num:'11.0', nome:'SEEC DF / FWC', tipo:'FWC', cliente:'SEEC-DF', status:'Em andamento', un:17, contrato:'Em Carteira', prod:{S15:4, S17:6, S22:3, S30:1, S36:3}, realAno:{S16:4, S21:6, S23:3}},
+  {num:'12.0', nome:'SEEC DF / PAINEL SOLAR', tipo:'Painel Solar', cliente:'SEEC-DF', status:'Concluído', un:7, contrato:'Em Carteira', prod:{S22:7}, realAno:{S24:7}},
+  {num:'13.0', nome:'PPM UMO IJUÍ E VACARIA/ LSWIM', tipo:'LSWIN', cliente:'PPM UMO', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S06:1}, realAno:{S14:1}},
+  {num:'14.0', nome:'DNIT PPM UMO IJUÍ - PERIFÉRICOS', tipo:'LSWIN', cliente:'PPM UMO', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S18:1}, realAno:{S20:1}},
+  {num:'15.0', nome:'PPM UMO VACARIA E ELDORADO/ HSWIM + PÓRTICO', tipo:'HSWIM', cliente:'PPM UMO', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'16.0', nome:'MOTIVA SOROCABANA / HSWIM', tipo:'HSWIM', cliente:'Motiva Sorocabana', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S16:3}, realAno:{S21:3}},
+  {num:'17.0', nome:'MOTIVA PRVIAS / HSWIM', tipo:'HSWIM', cliente:'Motiva PRVias', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S16:2}, realAno:{S21:1}},
+  {num:'18.0', nome:'AGETRAN / FSC110 ASV', tipo:'Radar', cliente:'AGETRAN', status:'Em andamento', un:2, contrato:'Em Carteira', prod:{S23:1, S29:1}, realAno:{S03:1, S23:1}},
+  {num:'19.0', nome:'DNIT PB / CEV E REV', tipo:'Radar', cliente:'DNIT PB', status:'Concluído', un:7, contrato:'Em Carteira', prod:{S23:7}, realAno:{S24:7}},
+  {num:'20.0', nome:'DNIT PB / CEV E REV (PAINEL SOLAR)', tipo:'Painel Solar', cliente:'DNIT PB', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S28:2}, realAno:{}},
+  {num:'21.0', nome:'DNIT PB / CEC ( FWC + FSCII )', tipo:'FWC', cliente:'DNIT PB', status:'Pendente', un:4, contrato:'Em Carteira', prod:{S25:4}, realAno:{}},
+  {num:'22.0', nome:'DNIT PB / PAINEL SOLAR', tipo:'Painel Solar', cliente:'DNIT PB', status:'Concluído', un:5, contrato:'Em Carteira', prod:{S05:5}, realAno:{S05:5}},
+  {num:'23.0', nome:'SIGVIAS / FSC110 - T48', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S10:10}},
+  {num:'24.0', nome:'SIGVIAS / FSC300 LASER', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S04:11}},
+  {num:'25.0', nome:'PRVIAS - PAINEL SOLAR', tipo:'Painel Solar', cliente:'PRVias', status:'Concluído', un:11, contrato:'Em Carteira', prod:{S05:11}, realAno:{S05:11}},
+  {num:'26.0', nome:'EPR HSWIM - FHC (DETECTOR DE ALTURA)', tipo:'HSWIM', cliente:'EPR', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S06:6}, realAno:{S08:6}},
+  {num:'27.0', nome:'EPR FREE FLOW - LOTE 4 - BANCO DE BATERIAS', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S07:8, S14:2, S15:3}, realAno:{S09:1, S10:7, S16:5}},
+  {num:'28.0', nome:'EPR FREE FLOW - LOTE 4 - TOTEM', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:14, contrato:'Em Carteira', prod:{S07:12, S12:2}, realAno:{S09:10, S10:2, S12:2}},
+  {num:'29.0', nome:'EPR FREE FLOW - LOTE 4 - CONTROLE DE ACESSO + PS', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S11:4, S17:4}},
+  {num:'30.0', nome:'VIA CAMPO - GRUPO PÁTRIA - FREE FLOW COMPLETO', tipo:'Free Flow', cliente:'Via Campo / Grupo Pátria', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S10:2}, realAno:{S12:2}},
+  {num:'31.0', nome:'EIXO PARAPUÃ - HSWIM', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'32.0', nome:'ECO101', tipo:'Radar', cliente:'ECO101', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S14:1}},
+  {num:'33.0', nome:'ECO101 - PAINEL SOLAR', tipo:'Painel Solar', cliente:'ECO101', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S18:1}, realAno:{S18:1}},
+  {num:'34.0', nome:'POC SMTU LONDRINA', tipo:'Radar', cliente:'SMTU Londrina', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S23:1}, realAno:{S23:1}},
+  {num:'35.0', nome:'DNIT/MT - PAINEL SOLAR', tipo:'Painel Solar', cliente:'DNIT/MT', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S18:2}, realAno:{S18:2}},
+  {num:'36.0', nome:'PIAF', tipo:'Radar', cliente:'—', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S24:3}},
+  {num:'37.0', nome:'DNIT/MT - TROCA DOS EQUIPAMENTOS VELSIS', tipo:'HSWIM', cliente:'DNIT/MT', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'38.0', nome:'DNIT/MS / FSCII CEV / REV', tipo:'Radar', cliente:'DNIT/MS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S23:4}},
+  {num:'39.0', nome:'FOZ TECHMOBI / FSC110', tipo:'Radar', cliente:'Foz Techmobi', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S22:1}},
+  {num:'40.0', nome:'ARTERIS LITORAL - FWC', tipo:'FWC', cliente:'Arteris Litoral', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Em andamento', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
+  {num:'42.0', nome:'REDUNDÂNCIA EPR FREE FLOW / FAD', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Em andamento', un:19, contrato:'Em Carteira', prod:{S27:10, S28:9}, realAno:{S27:19}},
+  {num:'43.0', nome:'CNL FreeFlow / Com Sala Técnica', tipo:'Free Flow', cliente:'CNL', status:'Pendente', un:15, contrato:'Em Carteira', prod:{S44:2, S45:2, S46:2, S47:2, S48:2, S49:2, S50:3}, realAno:{}},
+  {num:'44.0', nome:'LONDRINA', tipo:'Radar', cliente:'Londrina', status:'Pendente', un:41, contrato:'Em Carteira', prod:{S31:15, S32:15, S33:11}, realAno:{}},
+  {num:'45.0', nome:'SEINFRA/BAHIA', tipo:'Radar', cliente:'SEINFRA BA', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'46.0', nome:'EPR Litoral Pioneiro / Free Flow', tipo:'Free Flow', cliente:'EPR Litoral Pioneiro', status:'Pendente', un:2, contrato:'Prospecção', prod:{S36:1.0, S37:1.0}, realAno:{}},
+  {num:'47.0', nome:'Via Araucária / Free Flow *', tipo:'Free Flow', cliente:'Via Araucária', status:'Pendente', un:10, contrato:'Prospecção', prod:{S32:2.0, S33:2.0, S34:2.0, S35:2.0, S36:2.0}, realAno:{}},
+  {num:'48.0', nome:'Motiva Via Costeira / HSWIM *', tipo:'HSWIM', cliente:'Motiva Via Costeira', status:'Pendente', un:1, contrato:'Prospecção', prod:{S38:1.0}, realAno:{}},
+  {num:'49.0', nome:'Ecovias das Gerais / Radar *', tipo:'Radar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+  {num:'50.0', nome:'Ecovias das Gerais / Painel Solar *', tipo:'Painel Solar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+  {num:'51.0', nome:'DETRAN DF / Radar ASV', tipo:'Radar', cliente:'DETRAN DF', status:'Pendente', un:139, contrato:'Prospecção', prod:{S32:10.0, S33:10.0, S34:10.0, S35:10.0, S36:10.0, S37:10.0, S38:10.0, S39:10.0, S40:10.0, S41:10.0, S42:10.0, S43:10.0, S44:10.0, S45:9.0}, realAno:{}},
+  {num:'52.0', nome:'DER SP / HSWIM', tipo:'HSWIM', cliente:'DER SP', status:'Pendente', un:4, contrato:'Prospecção', prod:{S40:2.0, S41:2.0}, realAno:{}},
+  {num:'53.0', nome:'Motiva Pantanal / HSWIM', tipo:'HSWIM', cliente:'Motiva Pantanal', status:'Pendente', un:3, contrato:'Prospecção', prod:{S49:3.0}, realAno:{}},
+  {num:'54.0', nome:'DERSP / PWIM', tipo:'PWIM', cliente:'DERSP', status:'Pendente', un:23, contrato:'Prospecção', prod:{S42:4.0, S43:4.0, S44:4.0, S45:4.0, S46:4.0, S47:3.0}, realAno:{}},
+  {num:'55.0', nome:'FreeFlow Rota Liberdade *', tipo:'Free Flow', cliente:'—', status:'Pendente', un:4, contrato:'Prospecção', prod:{S37:2.0, S38:2.0}, realAno:{}},
+];
+
+const CAP_BASE = {
+  'Redundancia': 4,
+  'Free Flow':   2,
+  'HSWIM':       3,
+  'Radar':       15,
+  'FWC':         10,
+  'FAD':         40,
+  'PWIM':        4,
+  'Painel Solar':30,
+  'LSWIN':       2,
+};
+// capacidade total por semana (soma de todas as cap/sem dos tipos presentes)
+const CAP_TOTAL_SEM = Object.values(CAP_BASE).reduce((a,b)=>a+b,0); // 110
+
+let tiposUnicos = [...new Set(PROJETOS.map(p=>p.tipo))];
+let selected = new Set(PROJETOS.map((_,i)=>i));
+let activeTipos = new Set(tiposUnicos);
+let activeStatus = new Set(['andamento','pendente','concluido']);
+let activeContratos = new Set(['carteira','prospeccao']);
+let currentTab = 'gantt';
+
+// ── HELPERS ──
+const TIPOS_ALL = ['Radar','FAD','Painel Solar','HSWIM','Free Flow','Redundancia','PWIM','LSWIN','FWC'];
+const STATUS_ALL = ['Em andamento','Pendente','Concluído'];
+const STATUS_CLS = {'Em andamento':'st-andamento-bg','Pendente':'st-pendente-bg','Concluído':'st-concluido-bg'};
+const STATUS_KEY = {'Em andamento':'andamento','Pendente':'pendente','Concluído':'concluido'};
+const TIPO_K = t => TIPO_KEY[t]||t;
+const chipTipo = t => `<span class="chip chip-${TIPO_K(t)}">${t}</span>`;
+const statusBadge = s => s==='Em andamento'
+  ? `<span class="status status-andamento">Em andamento</span>`
+  : `<span class="status status-pendente">Pendente</span>`;
+const contratoBadge = c => c==='Em Carteira'
+  ? `<span class="contrato-carteira">Em Carteira</span>`
+  : `<span class="contrato-prospeccao">Prospecção</span>`;
+
+function tipoSelectHtml(idx, tipo) {
+  return `<select class="inline-select tipo-select chip-${TIPO_K(tipo)}" data-idx="${idx}" onchange="changeTipo(this)">
+    ${TIPOS_ALL.map(t=>`<option value="${t}"${t===tipo?' selected':''}>${t}</option>`).join('')}
+  </select>`;
+}
+function statusSelectHtml(idx, status) {
+  const cls = STATUS_CLS[status] || 'st-pendente-bg';
+  return `<select class="inline-select status-select ${cls}" data-idx="${idx}" onchange="changeStatus(this)">
+    ${STATUS_ALL.map(s=>`<option value="${s}"${s===status?' selected':''}>${s}</option>`).join('')}
+  </select>`;
+}
+const CONTRATO_ALL = ['Em Carteira','Prospecção'];
+function contratoSelectHtml(idx, contrato) {
+  const cls = contrato==='Prospecção' ? 'ct-prospeccao' : '';
+  return `<select class="inline-select contrato-select ${cls}" data-idx="${idx}" onchange="changeContrato(this)">
+    ${CONTRATO_ALL.map(c=>`<option value="${c}"${c===contrato?' selected':''}>${c}</option>`).join('')}
+  </select>`;
+}
+function refreshSidebarItem(idx) {
+  const el = document.querySelector(`#proj-list [data-idx="${idx}"]`);
+  if (!el) return;
+  const p = PROJETOS[idx];
+  const bar = el.querySelector('.proj-bar'); if (bar) bar.style.background = TIPO_COR[p.tipo]||'#888';
+  const name = el.querySelector('.proj-name'); if (name) name.textContent = p.nome;
+  const meta = el.querySelector('.proj-meta'); if (meta) meta.textContent = `${p.tipo} · ${p.un} un · ${p.cliente||'—'}`;
+}
+function ensureTipoTracked(tipo) {
+  if (!tiposUnicos.includes(tipo)) {
+    tiposUnicos.push(tipo);
+    activeTipos.add(tipo);
+    buildTipoFilters();
+  }
+}
+function changeTipo(sel) {
+  const idx = +sel.dataset.idx;
+  const novo = sel.value;
+  PROJETOS[idx].tipo = novo;
+  const tr = sel.closest('tr');
+  if (tr) tr.className = `t-${TIPO_K(novo)}`;
+  sel.className = `inline-select tipo-select chip-${TIPO_K(novo)}`;
+  ensureTipoTracked(novo);
+  refreshSidebarItem(idx);
+  applyFilters();
+  if (currentTab === 'capacidade') renderCapacidade();
+}
+function changeStatus(sel) {
+  const idx = +sel.dataset.idx;
+  const novo = sel.value;
+  PROJETOS[idx].status = novo;
+  sel.className = `inline-select status-select ${STATUS_CLS[novo] || 'st-pendente-bg'}`;
+  refreshSidebarItem(idx);
+  applyFilters();
+}
+function changeContrato(sel) {
+  const idx = +sel.dataset.idx;
+  const novo = sel.value;
+  PROJETOS[idx].contrato = novo;
+  sel.className = `inline-select contrato-select ${novo==='Prospecção' ? 'ct-prospeccao' : ''}`;
+  applyFilters();
+  if (currentTab === 'evolucao') renderEvolucao();
+  if (currentTab === 'capacidade') renderCapacidade();
+}
+
+function visibleIdx() {
+  return [...selected].filter(i => {
+    const el = document.querySelector(`#proj-list [data-idx="${i}"]`);
+    return el && !el.classList.contains('hidden-item');
+  });
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===`panel-${tab}`));
+  if(tab==='capacidade') renderCapacidade();
+  if(tab==='evolucao') renderEvolucao();
+// Auto-colapsar sidebar no mobile
+if (window.innerWidth <= 640) {
+  document.getElementById('sidebar').classList.add('collapsed');
+}
+}
+
+// ── SIDEBAR ──
+function buildTipoFilters() {
+  document.getElementById('tipo-filters').innerHTML = tiposUnicos.map(t => {
+    const k = TIPO_K(t);
+    return `<span class="filter-chip fc-${k} active" data-tipo="${t}" onclick="toggleTipo(this)">
+      <span class="filter-chip-dot" style="background:${TIPO_COR[t]||'#888'}"></span>${t}
+    </span>`;
+  }).join('');
+}
+
+function buildSidebarList() {
+  document.getElementById('proj-list').innerHTML = PROJETOS.map((p,i) =>
+    `<div class="proj-item selected" data-idx="${i}" onclick="toggleProj(this)">
+      <div class="proj-bar" style="background:${TIPO_COR[p.tipo]||'#888'}"></div>
+      <div class="proj-cb"><span class="proj-cb-check">${ICONS.check}</span></div>
+      <div class="proj-info">
+        <div class="proj-name">${p.nome}</div>
+        <div class="proj-meta">${p.tipo} · ${p.un} un · ${p.cliente||'—'}</div>
+      </div>
+      <button class="proj-del" title="Excluir projeto" onclick="excluirProjeto(event,${i})">${ICONS.x}</button>
+    </div>`
+  ).join('');
+}
+
+function toggleTipo(el) {
+  const t = el.dataset.tipo;
+  activeTipos.has(t) ? activeTipos.delete(t) : activeTipos.add(t);
+  el.classList.toggle('active', activeTipos.has(t));
+  applyFilters();
+}
+function toggleStatus(el) {
+  const st = el.dataset.st;
+  activeStatus.has(st) ? activeStatus.delete(st) : activeStatus.add(st);
+  el.classList.toggle('active', activeStatus.has(st));
+  applyFilters();
+}
+function toggleContrato(el) {
+  const ct = el.dataset.ct;
+  activeContratos.has(ct) ? activeContratos.delete(ct) : activeContratos.add(ct);
+  el.classList.toggle('active', activeContratos.has(ct));
+  applyFilters();
+}
+function excluirProjeto(event, idx) {
+  event.stopPropagation(); // não dispara toggleProj
+  const p = PROJETOS[idx];
+  if (!confirm(`Excluir "${p.nome}"?\nEsta ação não pode ser desfeita.`)) return;
+
+  // Remove do array PROJETOS (marca como excluído para não reindexar o DOM)
+  PROJETOS.splice(idx, 1);
+
+  // Remove da seleção
+  selected.delete(idx);
+  // Reindexar selected (todos acima de idx decrementam)
+  const newSelected = new Set();
+  selected.forEach(i => newSelected.add(i > idx ? i - 1 : i));
+  selected = newSelected;
+
+  // Remove linha do Gantt
+  const ganttRow = document.querySelector(`#gantt-body tr[data-idx="${idx}"]`);
+  if (ganttRow) ganttRow.remove();
+
+  // Reindexar data-idx no Gantt
+  document.querySelectorAll('#gantt-body tr[data-idx]').forEach(tr => {
+    const i = +tr.dataset.idx;
+    if (i > idx) tr.dataset.idx = i - 1;
+  });
+
+  // Remove do sidebar e reindexar
+  const sideEl = document.querySelector(`#proj-list [data-idx="${idx}"]`);
+  if (sideEl) sideEl.remove();
+  document.querySelectorAll('#proj-list [data-idx]').forEach(el => {
+    const i = +el.dataset.idx;
+    if (i > idx) {
+      el.dataset.idx = i - 1;
+      // Atualizar o onclick do botão excluir
+      const delBtn = el.querySelector('.proj-del');
+      if (delBtn) delBtn.setAttribute('onclick', `excluirProjeto(event,${i - 1})`);
+    }
+  });
+
+  recalcGantt();
+  updateAll();
+
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span class="toast-row">${ICONS.x} Projeto "${p.nome}" excluído</span>`;
+  t.style.background = 'var(--red)';
+  t.classList.add('show');
+  setTimeout(() => { t.classList.remove('show'); t.style.background = ''; }, 2500);
+}
+
+function toggleProj(el) {
+  const i = +el.dataset.idx;
+  selected.has(i) ? selected.delete(i) : selected.add(i);
+  el.classList.toggle('selected', selected.has(i));
+  updateAll();
+  // Fechar drawer mobile ao selecionar
+  if (window.innerWidth <= 640) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+  }
+}
+function selectAll() {
+  document.querySelectorAll('.proj-item:not(.hidden-item)').forEach(el => { selected.add(+el.dataset.idx); el.classList.add('selected'); });
+  updateAll();
+}
+function selectNone() {
+  document.querySelectorAll('.proj-item:not(.hidden-item)').forEach(el => { selected.delete(+el.dataset.idx); el.classList.remove('selected'); });
+  updateAll();
+}
+function applyFilters() {
+  document.querySelectorAll('.proj-item').forEach(el => {
+    const i = +el.dataset.idx, p = PROJETOS[i];
+    const stKey = STATUS_KEY[p.status] || 'pendente';
+    const ctKey = p.contrato === 'Em Carteira' ? 'carteira' : 'prospeccao';
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const show = (!q||(p.nome.toLowerCase().includes(q)||p.cliente.toLowerCase().includes(q)))
+      && activeTipos.has(p.tipo) && activeStatus.has(stKey) && activeContratos.has(ctKey);
+    el.classList.toggle('hidden-item', !show);
+  });
+  updateAll();
+}
+
+// ── GANTT ──
+function renderGantt() {
+  const body = document.getElementById('gantt-body');
+  body.innerHTML = '';
+  PROJETOS.forEach((p,i) => {
+    const tr = document.createElement('tr');
+    tr.className = `t-${TIPO_K(p.tipo)}`; tr.dataset.idx = i;
+    let rowTotal = 0; SEMANAS.forEach(s => rowTotal += (p.prod[s]||0));
+    p.un = rowTotal;
+    tr.innerHTML = `
+      <td class="meta-col col-num">${p.num}</td>
+      <td class="meta-col col-proj" contenteditable="true">${p.nome}</td>
+      <td class="meta-col col-tipo">${tipoSelectHtml(i, p.tipo)}</td>
+      <td class="meta-col col-cliente" contenteditable="true">${p.cliente}</td>
+      <td class="meta-col col-status">${statusSelectHtml(i, p.status)}</td>
+      <td class="meta-col col-un" title="Soma automática das semanas — não editável">${rowTotal}</td>
+      <td class="meta-col col-contrato">${contratoSelectHtml(i, p.contrato)}</td>
+      ${SEMANAS.map(s=>{const v=p.prod[s]||'';return `<td class="col-week${v?' has-value':''}" contenteditable="true" data-s="${s}">${v}</td>`;}).join('')}`;
+    body.appendChild(tr);
+    bindEditableRow(tr, i);
+  });
+  const tot = document.createElement('tr'); tot.className='total-row';
+  tot.innerHTML = `<td class="meta-col col-num" colspan="5">TOTAL / SEM.</td>
+    <td class="meta-col" id="tot-geral" style="text-align:right">0</td>
+    <td class="meta-col">&nbsp;</td>
+    ${SEMANAS.map(s=>`<td class="col-week" style="text-align:center" id="tot-${s}">0</td>`).join('')}`;
+  body.appendChild(tot);
+}
+
+function bindEditableRow(tr, idx) {
+  tr.querySelectorAll('.col-week').forEach(c => {
+    const s = c.dataset.s;
+    c.addEventListener('input', () => {
+      const v = parseFloat(c.textContent.trim());
+      if (!isNaN(v) && v > 0) PROJETOS[idx].prod[s] = v;
+      else delete PROJETOS[idx].prod[s];
+      recalcGantt();
+      if (currentTab === 'capacidade') renderCapacidade();
+      if (currentTab === 'evolucao') renderEvolucao();
+    });
+    c.addEventListener('blur', () => c.classList.toggle('has-value', c.textContent.trim()!==''));
+  });
+  const nomeCell = tr.querySelector('.col-proj');
+  if (nomeCell) nomeCell.addEventListener('input', () => {
+    PROJETOS[idx].nome = nomeCell.textContent.trim();
+    refreshSidebarItem(idx);
+  });
+  const clienteCell = tr.querySelector('.col-cliente');
+  if (clienteCell) clienteCell.addEventListener('input', () => {
+    PROJETOS[idx].cliente = clienteCell.textContent.trim();
+    refreshSidebarItem(idx);
+  });
+}
+
+function recalcGantt() {
+  const totais = {}; SEMANAS.forEach(s=>totais[s]=0);
+  document.querySelectorAll('#gantt-body tr[data-idx]:not(.proj-row-hidden)').forEach(tr => {
+    let rowTotal=0;
+    SEMANAS.forEach(s => { const c=tr.querySelector(`[data-s="${s}"]`); const v=c?parseFloat(c.textContent)||0:0; totais[s]+=v; rowTotal+=v; });
+    const unCell = tr.querySelector('.col-un'); if (unCell) unCell.textContent = rowTotal;
+    const idx = +tr.dataset.idx;
+    if (PROJETOS[idx]) PROJETOS[idx].un = rowTotal;
+    refreshSidebarItem(idx);
+  });
+  SEMANAS.forEach(s => { const el=document.getElementById(`tot-${s}`); if(el) el.textContent=totais[s]||0; });
+  const tg=document.getElementById('tot-geral'); if(tg) tg.textContent=SEMANAS.reduce((a,s)=>a+totais[s],0);
+  return totais;
+}
+
+function updateGanttVisibility() {
+  const vis = new Set(visibleIdx());
+  document.querySelectorAll('#gantt-body tr[data-idx]').forEach(tr => tr.classList.toggle('proj-row-hidden', !vis.has(+tr.dataset.idx)));
+  recalcGantt();
+}
+
+// ── ANÁLISE BAR ──
+function updateAnalysis() {
+  const idxs = visibleIdx();
+  const totalUn = idxs.reduce((a,i)=>a+PROJETOS[i].un,0);
+  const totSem = {}; SEMANAS.forEach(s=>totSem[s]=0);
+  idxs.forEach(i=>SEMANAS.forEach(s=>totSem[s]+=(PROJETOS[i].prod[s]||0)));
+  const maxV = Math.max(...Object.values(totSem),1);
+  const pico = Math.max(...Object.values(totSem));
+  const picoSem = SEMANAS.find(s=>totSem[s]===pico)||'—';
+  document.getElementById('an-proj').textContent = idxs.length;
+  document.getElementById('an-un').textContent = totalUn;
+  document.getElementById('an-pico').textContent = pico||0;
+  document.getElementById('an-pico-sem').textContent = picoSem;
+  document.getElementById('an-sems').textContent = SEMANAS.filter(s=>totSem[s]>0).length;
+  document.getElementById('minibar').innerHTML = SEMANAS.map(s => {
+    const h=Math.max(2,Math.round((totSem[s]/maxV)*30));
+    return `<div class="minibar" style="height:${h}px;opacity:${totSem[s]?0.8:0.15}"></div>`;
+  }).join('');
+}
+
+function updateFooter() {
+  const idxs = visibleIdx();
+  document.getElementById('sel-count').textContent = `${idxs.length} selecionados`;
+  document.getElementById('sel-un').textContent = `${idxs.reduce((a,i)=>a+PROJETOS[i].un,0)} un.`;
+}
+
+function updateAll() {
+  updateGanttVisibility();
+  updateAnalysis();
+  updateFooter();
+  if (currentTab === 'capacidade') renderCapacidade();
+}
+
+// ── CAPACIDADE ──
+function renderCapacidade() {
+  const idxs = visibleIdx();
+  const byTipo = {};
+  tiposUnicos.forEach(t => { byTipo[t] = {}; SEMANAS.forEach(s => byTipo[t][s] = 0); });
+  idxs.forEach(i => {
+    const p = PROJETOS[i];
+    SEMANAS.forEach(s => { if (byTipo[p.tipo]) byTipo[p.tipo][s] += (p.prod[s] || 0); });
+  });
+
+  // Cards resumo
+  const grid = document.getElementById('cap-grid');
+  grid.innerHTML = '';
+  tiposUnicos.forEach(t => {
+    const total = idxs.filter(i => PROJETOS[i].tipo === t).reduce((a, i) => a + PROJETOS[i].un, 0);
+    const cap = CAP_BASE[t] || 1;
+    const semTotal = SEMANAS.reduce((a, s) => a + byTipo[t][s], 0);
+    const maxSem = Math.max(...SEMANAS.map(s => byTipo[t][s]), 0);
+    const pct = Math.min(Math.round((maxSem / cap) * 100), 200);
+    const status = !semTotal ? '-' : maxSem > cap ? 'SOBRECARGA' : maxSem > cap * 0.8 ? 'ATENÇÃO' : 'NORMAL';
+    const stClass = status === 'SOBRECARGA' ? 'st-sobrecarga' : status === 'ATENÇÃO' ? 'st-atencao' : status === 'NORMAL' ? 'st-normal' : 'st-vazio';
+    const cor = TIPO_COR[t] || '#888';
+    const barColor = status === 'SOBRECARGA' ? 'var(--red)' : status === 'ATENÇÃO' ? 'var(--amber)' : 'var(--green)';
+    const div = document.createElement('div'); div.className = 'cap-card';
+    div.innerHTML = `
+      <div class="cap-card-accent" style="background:${cor}"></div>
+      <div style="padding-left:8px">
+        <div class="cap-label">${t}</div>
+        <div class="cap-total" style="color:${cor}">${total}</div>
+        <div class="cap-cap">${cap} un/sem · pico ${maxSem}</div>
+        <div class="cap-bar-bg"><div class="cap-bar-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
+        <div class="cap-status ${stClass}">${status === '-' ? 'Sem demanda' : status}</div>
+      </div>`;
+    grid.appendChild(div);
+  });
+
+  // Tabela por tipo
+  const capBody = document.getElementById('cap-body');
+  capBody.innerHTML = '';
+  const totaisSem = {}; SEMANAS.forEach(s => totaisSem[s] = 0);
+  tiposUnicos.forEach(t => {
+    const cap = CAP_BASE[t] || 1;
+    const tr = document.createElement('tr');
+    let rowTotal = 0;
+    const cells = SEMANAS.map(s => {
+      const v = byTipo[t][s]; rowTotal += v; totaisSem[s] += v;
+      const cls = v > cap ? 'over' : v > cap * 0.8 && v > 0 ? 'warn' : '';
+      return `<td class="${cls}" data-tipo="${t}" data-sem="${s}">${v || ''}</td>`;
+    }).join('');
+    const total = idxs.filter(i => PROJETOS[i].tipo === t).reduce((a, i) => a + PROJETOS[i].un, 0);
+    tr.innerHTML = `
+      <td class="tipo-col">${chipTipo(t)}</td>
+      <td class="cap-col">${cap}/sem</td>
+      ${cells}
+      <td style="border-left:1px solid var(--border);font-weight:700;text-align:right;padding-right:8px">${total || ''}</td>`;
+    capBody.appendChild(tr);
+  });
+
+  // Linha total
+  const totRow = document.createElement('tr'); totRow.className = 'total-row';
+  const totalGeral = idxs.reduce((a, i) => a + PROJETOS[i].un, 0);
+  totRow.innerHTML = `<td class="tipo-col">TOTAL</td><td class="cap-col" style="color:var(--text-muted)">${CAP_TOTAL_SEM}/sem</td>`
+    + SEMANAS.map(s => `<td style="font-weight:700">${totaisSem[s] || 0}</td>`).join('')
+    + `<td style="border-left:1px solid var(--border);font-weight:700;text-align:right;padding-right:8px">${totalGeral}</td>`;
+  capBody.appendChild(totRow);
+
+  // Tabela % ocupação
+  const occBody = document.getElementById('occ-body');
+  occBody.innerHTML = '';
+  tiposUnicos.forEach(t => {
+    const cap = CAP_BASE[t] || 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="tipo-col" style="font-size:10px">${t}</td>` + SEMANAS.map(s => {
+      const v = byTipo[t][s]; const pct = Math.round((v / cap) * 100);
+      const cls = v > cap ? 'occ-over' : v > cap * 0.8 && v > 0 ? 'occ-warn' : v > 0 ? 'occ-ok' : '';
+      return `<td class="occ-cell ${cls}">${v ? pct + '%' : ''}</td>`;
+    }).join('');
+    occBody.appendChild(tr);
+  });
+  // TOTAL = soma dos percentuais individuais de cada tipo com produção na semana
+  const totOcc = document.createElement('tr'); totOcc.className = 'total-row';
+  totOcc.innerHTML = `<td class="tipo-col">TOTAL</td>` + SEMANAS.map(s => {
+    let somaPct = 0;
+    tiposUnicos.forEach(t => {
+      const v = byTipo[t][s];
+      if (v > 0) somaPct += Math.round((v / (CAP_BASE[t] || 1)) * 100);
+    });
+    const cls = somaPct > 200 ? 'occ-over' : somaPct > 100 ? 'occ-warn' : somaPct > 0 ? 'occ-ok' : '';
+    return `<td class="occ-cell ${cls}">${somaPct > 0 ? somaPct + '%' : ''}</td>`;
+  }).join('');
+  occBody.appendChild(totOcc);
+}
+
+// ── EVOLUÇÃO (previsto x realizado) ──
+function evoBuildSelect() {
+  const sel = document.getElementById('evo-select');
+  const carteira = PROJETOS.map((p,i)=>[p,i]).filter(([p])=>p.contrato==='Em Carteira');
+  const prospec = PROJETOS.map((p,i)=>[p,i]).filter(([p])=>p.contrato!=='Em Carteira');
+  const cur = sel.value;
+  sel.innerHTML = `<option value="__todos__">Todos os projetos (${carteira.length} em carteira)</option>`
+    + carteira.map(([p,i]) => `<option value="${i}">${p.nome}</option>`).join('')
+    + (prospec.length ? `<optgroup label="Prospecção (sem execução)">${prospec.map(([p,i])=>`<option value="${i}">${p.nome}</option>`).join('')}</optgroup>` : '');
+  if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+}
+
+function evoMonthly(prevAno, realAno) {
+  const prevM = new Array(12).fill(0), realM = new Array(12).fill(0);
+  Object.entries(prevAno||{}).forEach(([s,v]) => { const mi = MESES_PT.indexOf(WEEK_MONTH[s]); if (mi>=0) prevM[mi]+=v; });
+  Object.entries(realAno||{}).forEach(([s,v]) => { const mi = MESES_PT.indexOf(WEEK_MONTH[s]); if (mi>=0) realM[mi]+=v; });
+  return { prevM, realM };
+}
+function evoCumulative(arr) { let acc=0; return arr.map(v => acc += v); }
+function evoAggregateCarteira() {
+  const prevAno = {}, realAno = {};
+  PROJETOS.filter(p => p.contrato === 'Em Carteira').forEach(p => {
+    Object.entries(p.prod||{}).forEach(([s,v]) => { prevAno[s] = (prevAno[s]||0) + v; });
+    Object.entries(p.realAno||{}).forEach(([s,v]) => { realAno[s] = (realAno[s]||0) + v; });
+  });
+  return { prevAno, realAno };
+}
+
+function evoBuildSVG(prevCum, realCum, todayIdx) {
+  const W=720, H=260, padL=44, padR=12, padT=20, padB=30;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const maxY = Math.max(prevCum[11], realCum[11], 1) * 1.12;
+  const x = i => padL + (i/11)*plotW;
+  const y = v => padT + plotH - (v/maxY)*plotH;
+  const fmt = v => Math.round(v).toLocaleString('pt-BR');
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+
+  // grid + eixo Y
+  for (let g=0; g<=3; g++) {
+    const v = maxY*g/3, yy = y(v);
+    svg += `<line class="evo-grid-line" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/>`;
+    svg += `<text class="evo-axis-label" x="${padL-6}" y="${yy+3}" text-anchor="end">${fmt(v)}</text>`;
+  }
+
+  // área de gap, por segmento — vermelho quando atrasado, verde quando adiantado
+  if (todayIdx >= 0) {
+    for (let i=0; i<todayIdx; i++) {
+      const gapA = realCum[i]-prevCum[i], gapB = realCum[i+1]-prevCum[i+1];
+      const adiantado = (gapA+gapB) >= 0;
+      const d = `M ${x(i)} ${y(prevCum[i])} L ${x(i+1)} ${y(prevCum[i+1])} L ${x(i+1)} ${y(realCum[i+1])} L ${x(i)} ${y(realCum[i])} Z`;
+      svg += `<path class="evo-gap-area ${adiantado?'evo-gap-pos':'evo-gap-neg'}" d="${d}"/>`;
+    }
+  }
+
+  // linha "mês atual"
+  if (todayIdx >= 0) {
+    svg += `<line class="evo-today-line" x1="${x(todayIdx)}" y1="${padT}" x2="${x(todayIdx)}" y2="${H-padB}"/>`;
+    svg += `<text class="evo-axis-label" x="${x(todayIdx)}" y="${padT-4}" text-anchor="middle" style="font-weight:700">hoje</text>`;
+  }
+
+  // linhas previsto / realizado — suavizadas (bezier, sem "overshoot" acima/abaixo dos pontos)
+  const linePath = arr => {
+    const pts = arr.map((v,i) => [x(i), y(v)]);
+    if (pts.length < 2) return pts.map(p => `M ${p[0]} ${p[1]}`).join(' ');
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i=0; i<pts.length-1; i++) {
+      const [x0,y0] = pts[i], [x1,y1] = pts[i+1];
+      const mx = x0 + (x1-x0)/2;
+      d += ` C ${mx} ${y0}, ${mx} ${y1}, ${x1} ${y1}`;
+    }
+    return d;
+  };
+  svg += `<path class="evo-line-prev" d="${linePath(prevCum)}"/>`;
+  svg += `<path class="evo-line-real" d="${linePath(realCum.slice(0, todayIdx>=0?todayIdx+1:1))}"/>`;
+
+  // pontos + tooltip nativo
+  prevCum.forEach((v,i) => { svg += `<circle class="evo-pt-prev" cx="${x(i)}" cy="${y(v)}" r="2.6"><title>${MESES_PT[i]} · Previsto acum.: ${fmt(v)}</title></circle>`; });
+  if (todayIdx >= 0) realCum.slice(0, todayIdx+1).forEach((v,i) => { svg += `<circle class="evo-pt-real" cx="${x(i)}" cy="${y(v)}" r="2.6"><title>${MESES_PT[i]} · Realizado acum.: ${fmt(v)}</title></circle>`; });
+
+  // eixo X
+  MESES_PT.forEach((m,i) => { svg += `<text class="evo-axis-label" x="${x(i)}" y="${H-padB+16}" text-anchor="middle">${m}</text>`; });
+
+  svg += '</svg>';
+  return svg;
+}
+
+function renderEvolucao() {
+  evoBuildSelect();
+  const sel = document.getElementById('evo-select');
+  const val = sel.value || '__todos__';
+  const chartEl = document.getElementById('evo-chart');
+  const statsEl = document.getElementById('evo-stats');
+  const emptyEl = document.getElementById('evo-empty');
+
+  let prevAno, realAno, label;
+  if (val === '__todos__') {
+    ({ prevAno, realAno } = evoAggregateCarteira());
+    label = 'todos os projetos em carteira';
+  } else {
+    const p = PROJETOS[+val];
+    // Prospecção não tem execução — nunca entra em previsto x realizado.
+    if (p.contrato !== 'Em Carteira') {
+      chartEl.parentElement.style.display = 'none';
+      emptyEl.style.display = 'block';
+      statsEl.innerHTML = '';
+      document.getElementById('evo-ranking-wrap').style.display = 'none';
+      return;
+    }
+    prevAno = p.prod || {}; realAno = p.realAno || {};
+    label = p.nome;
+  }
+
+  const semPrev = Object.keys(prevAno).length === 0;
+  if (semPrev) {
+    chartEl.parentElement.style.display = 'none';
+    emptyEl.style.display = 'block';
+    statsEl.innerHTML = '';
+    document.getElementById('evo-ranking-wrap').style.display = 'none';
+    return;
+  }
+  chartEl.parentElement.style.display = '';
+  emptyEl.style.display = 'none';
+
+  const { prevM, realM } = evoMonthly(prevAno, realAno);
+  const prevCum = evoCumulative(prevM);
+  const realCum = evoCumulative(realM);
+  // "hoje" é sempre a semana/mês atual do sistema (S28 → Jul), não o último mês
+  // com algum registro de Real — isso evitava mostrar "hoje" lá atrás quando
+  // ninguém tinha lançado produção recente.
+  const todayIdx = TODAY_MONTH_IDX;
+
+  chartEl.innerHTML = evoBuildSVG(prevCum, realCum, todayIdx);
+
+  const previstoAteHoje = prevCum[todayIdx];
+  const realizadoAteHoje = realCum[todayIdx];
+
+  // Gap: para "Todos", NÃO usar a diferença líquida agregada (projeto adiantado esconde
+  // projeto atrasado). Somamos só o atraso de cada projeto — o mesmo número da lista abaixo.
+  let gap, gapSub;
+  if (val === '__todos__') {
+    gap = PROJETOS.filter(p => p.contrato === 'Em Carteira')
+      .map(evoProjectGap).filter(r => r && r.gap < 0)
+      .reduce((a,r) => a + r.gap, 0);
+    gapSub = 'soma dos projetos atrasados (cada um até seu próprio mês mais recente com execução)';
+  } else {
+    gap = realizadoAteHoje - previstoAteHoje;
+    const gapPct = previstoAteHoje>0 ? Math.round((gap/previstoAteHoje)*100) : 0;
+    gapSub = `${gap<0?'atrasado':gap>0?'adiantado':'em dia'} · ${gapPct>0?'+':''}${gapPct}% vs. plano`;
+  }
+  const gapCls = gap<0 ? 'gap-neg' : gap>0 ? 'gap-pos' : '';
+
+  statsEl.innerHTML = `
+    <div class="evo-stat"><div class="evo-stat-lbl">Previsto total (ano)</div><div class="evo-stat-val">${Math.round(prevCum[11]).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">un. — ${label}</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Previsto até ${todayIdx>=0?MESES_PT[todayIdx]:'—'}</div><div class="evo-stat-val">${Math.round(previstoAteHoje).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">acumulado no plano</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Realizado até ${todayIdx>=0?MESES_PT[todayIdx]:'—'}</div><div class="evo-stat-val">${Math.round(realizadoAteHoje).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">acumulado executado</div></div>
+    <div class="evo-stat ${gapCls}"><div class="evo-stat-lbl">${val==='__todos__'?'Total atrasado':'Gap'}</div><div class="evo-stat-val">${gap>0?'+':''}${Math.round(gap).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">${gapSub}</div></div>`;
+
+  renderEvoRanking(val);
+}
+
+// ── EVOLUÇÃO — ranking de atraso/adiantamento por projeto ──
+function evoProjectGap(p) {
+  const { prevM, realM } = evoMonthly(p.prod||{}, p.realAno||{});
+  const prevCumP = evoCumulative(prevM);
+  const realCumP = evoCumulative(realM);
+  let idx = -1;
+  realM.forEach((v,i) => { if (v>0) idx = i; });
+  if (idx < 0) return null;
+  return { gap: realCumP[idx] - prevCumP[idx], mes: MESES_PT[idx] };
+}
+
+function renderEvoRanking(val) {
+  const wrap = document.getElementById('evo-ranking-wrap');
+  const body = document.getElementById('evo-ranking');
+  if (val !== '__todos__') { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  const items = PROJETOS
+    .filter(p => p.contrato === 'Em Carteira')
+    .map(p => ({ nome: p.nome, r: evoProjectGap(p) }))
+    .filter(x => x.r && x.r.gap < 0)
+    .sort((a,b) => a.r.gap - b.r.gap);
+
+  if (!items.length) { body.innerHTML = '<div class="evo-rk-empty">Nenhum projeto atrasado — tudo em dia ou adiantado.</div>'; return; }
+
+  const maxAbs = Math.max(...items.map(x => Math.abs(x.r.gap)), 1);
+  body.innerHTML = items.map(x => {
+    const g = x.r.gap;
+    const pct = Math.min(100, Math.round(Math.abs(g)/maxAbs*100));
+    return `<div class="evo-rk-row" title="Até ${x.r.mes}">
+      <span class="evo-rk-name">${x.nome}</span>
+      <span class="evo-rk-bar-wrap"><span class="evo-rk-bar" style="width:${pct}%;background:var(--red)"></span></span>
+      <span class="evo-rk-val neg">${Math.round(g).toLocaleString('pt-BR')} un.</span>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL NOVO PROJETO ──
+function openModal() {
+  ['f-nome','f-cliente','f-prod'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-tipo').value='Radar';
+  document.getElementById('f-status').value='Pendente';
+  document.getElementById('f-contrato').value='Em Carteira';
+  document.getElementById('modal-backdrop').classList.add('open');
+  setTimeout(()=>document.getElementById('f-nome').focus(), 150);
+}
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+function handleBackdropClick(e) { if(e.target===document.getElementById('modal-backdrop')) closeModal(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+function parseProd(text) {
+  const prod = {};
+  text.split('\n').forEach(line => {
+    const parts = line.split(',').map(s=>s.trim());
+    if(parts.length>=2) {
+      const sem = parts[0].toUpperCase().replace(/\s/g,'');
+      const val = parseFloat(parts[1]);
+      if(SEMANAS.includes(sem) && !isNaN(val) && val>0) prod[sem]=val;
+    }
+  });
+  return prod;
+}
+
+function addProject() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if(!nome) { document.getElementById('f-nome').focus(); document.getElementById('f-nome').style.borderColor='var(--red)'; return; }
+  document.getElementById('f-nome').style.borderColor='';
+  const tipo     = document.getElementById('f-tipo').value;
+  const cliente  = document.getElementById('f-cliente').value.trim() || '—';
+  const status   = document.getElementById('f-status').value;
+  const contrato = document.getElementById('f-contrato').value;
+  const prod     = parseProd(document.getElementById('f-prod').value);
+  const un       = Object.values(prod).reduce((a,v)=>a+v,0);
+
+  // gera número sequencial
+  const lastNum = PROJETOS.length ? Math.max(...PROJETOS.map(p=>parseFloat(p.num)||0)) : 0;
+  const num = (Math.floor(lastNum)+1)+'.0';
+
+  const newProj = {num, nome, tipo, cliente, status, un, contrato, prod};
+  PROJETOS.push(newProj);
+  const i = PROJETOS.length-1;
+  selected.add(i);
+  ensureTipoTracked(tipo);
+
+  // Atualiza sidebar
+  const list = document.getElementById('proj-list');
+  const div = document.createElement('div');
+  div.className='proj-item selected'; div.dataset.idx=i;
+  div.onclick = function(){ toggleProj(this); };
+  div.innerHTML=`<div class="proj-bar" style="background:${TIPO_COR[tipo]||'#888'}"></div>
+    <div class="proj-cb"><span class="proj-cb-check">${ICONS.check}</span></div>
+    <div class="proj-info">
+      <div class="proj-name">${nome}</div>
+      <div class="proj-meta">${tipo} · ${un} un · ${cliente}</div>
+    </div>
+    <button class="proj-del" title="Excluir projeto" onclick="excluirProjeto(event,${i})">${ICONS.x}</button>`;
+  list.appendChild(div);
+
+  // Adiciona linha no gantt (antes do total-row)
+  const body = document.getElementById('gantt-body');
+  const totalRow = body.querySelector('.total-row');
+  const tk = TIPO_KEY[tipo]||tipo;
+  const tr = document.createElement('tr');
+  tr.className=`t-${tk} new-row-flash`; tr.dataset.idx=i;
+  tr.innerHTML=`
+    <td class="meta-col col-num">${num}</td>
+    <td class="meta-col col-proj" contenteditable="true">${nome}</td>
+    <td class="meta-col col-tipo">${tipoSelectHtml(i, tipo)}</td>
+    <td class="meta-col col-cliente" contenteditable="true">${cliente}</td>
+    <td class="meta-col col-status">${statusSelectHtml(i, status)}</td>
+    <td class="meta-col col-un" title="Soma automática das semanas — não editável">${un}</td>
+    <td class="meta-col col-contrato">${contratoSelectHtml(i, contrato)}</td>
+    ${SEMANAS.map(s=>{const v=prod[s]||'';return `<td class="col-week${v?' has-value':''}" contenteditable="true" data-s="${s}">${v}</td>`;}).join('')}`;
+  body.insertBefore(tr, totalRow);
+  bindEditableRow(tr, i);
+
+  closeModal();
+  updateAll();
+  // scrolla até a nova linha
+  tr.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  const t=document.getElementById('toast');
+  t.innerHTML=`<span class="toast-row">${ICONS.check} Projeto "${nome}" adicionado!</span>`;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── EXPORT CSV ──
+function cellText(td) {
+  if (!td) return '';
+  const sel = td.querySelector('select');
+  if (sel) return sel.value;
+  return td.textContent.trim();
+}
+function exportCSV() {
+  const rows=[['#','Projeto','Tipo','Cliente','Status','Un','Contrato',...SEMANAS]];
+  document.querySelectorAll('#gantt-body tr[data-idx]:not(.proj-row-hidden)').forEach(tr=>{
+    const tds=tr.querySelectorAll('td');
+    const meta=[0,1,2,3,4,5,6].map(j=>cellText(tds[j]));
+    const weeks=SEMANAS.map(s=>{const c=tr.querySelector(`[data-s="${s}"]`);return c?c.textContent.trim():'';});
+    rows.push([...meta,...weeks]);
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'));
+  a.download='Cronograma_Fiscaltech_2026.csv'; a.click();
+}
+
+
+
+
+// ── GOOGLE SHEETS INTEGRATION (via Apps Script) ──
+
+const SHEET_HEADER = ['num','nome','tipo','cliente','status','un','contrato',...SEMANAS];
+
+function projetosParaLinhas(projs) {
+  return projs.map(p => SHEET_HEADER.map(col => {
+    if (SEMANAS.includes(col)) return p.prod[col] || '';
+    return p[col] !== undefined ? p[col] : '';
+  }));
+}
+
+function linhaParaProjeto(row) {
+  const p = {};
+  SHEET_HEADER.forEach((col, i) => {
+    const val = row[i] !== undefined ? row[i] : '';
+    if (SEMANAS.includes(col)) {
+      if (!p.prod) p.prod = {};
+      const n = parseFloat(val);
+      if (!isNaN(n) && n > 0) p.prod[col] = n;
+    } else if (col === 'un') {
+      p[col] = parseFloat(val) || 0;
+    } else {
+      p[col] = String(val);
+    }
+  });
+  if (!p.prod) p.prod = {};
+  return p;
+}
+
+function coletarProjsDom() {
+  const projs = [];
+  document.querySelectorAll('#gantt-body tr[data-idx]').forEach(tr => {
+    const i = +tr.dataset.idx;
+    const p = { ...PROJETOS[i], prod: {} };
+    const nomeEl    = tr.querySelector('.col-proj');    if (nomeEl)    p.nome    = nomeEl.textContent.trim();
+    const clienteEl = tr.querySelector('.col-cliente'); if (clienteEl) p.cliente = clienteEl.textContent.trim();
+    const unEl      = tr.querySelector('.col-un');      if (unEl)      p.un      = parseFloat(unEl.textContent.trim()) || 0;
+    SEMANAS.forEach(s => {
+      const c = tr.querySelector(`[data-s="${s}"]`);
+      const v = c ? parseFloat(c.textContent.trim()) : NaN;
+      if (!isNaN(v) && v > 0) p.prod[s] = v;
+    });
+    projs.push(p);
+  });
+  return projs;
+}
+
+async function sheetsCarregar() {
+  showStatus('Carregando…', 'loading');
+  try {
+    const res = await fetch(WEBAPP_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (data.error) throw new Error(data.error);
+    const rows = data.values || [];
+    if (rows.length <= 1) {
+      await sheetsSalvar(false);
+      showStatus('Planilha inicializada', 'ok');
+      return;
+    }
+    const projsCarregados = rows.slice(1).map(row => linhaParaProjeto(row));
+    PROJETOS.length = 0;
+    projsCarregados.forEach(p => PROJETOS.push(p));
+    selected = new Set(PROJETOS.map((_, i) => i));
+    buildSidebarList();
+    renderGantt();
+    updateAll();
+    showStatus(`${PROJETOS.length} projetos carregados`, 'ok');
+  } catch (e) {
+    showStatus('Erro ao carregar: ' + e.message, 'erro');
+    console.error(e);
+  }
+}
+
+async function sheetsSalvar(mostrarMsg = true) {
+  if (mostrarMsg) showStatus('Salvando…', 'loading');
+  try {
+    const projs  = coletarProjsDom();
+    const values = [SHEET_HEADER, ...projetosParaLinhas(projs)];
+    const body   = JSON.stringify({ values });
+    // Apps Script via fetch com redirect follow
+    const res = await fetch(WEBAPP_URL, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
+      body
+    });
+    const text = await res.text();
+    let data = {};
+    try { data = JSON.parse(text); } catch(_) {}
+    if (data.error) throw new Error(data.error);
+    if (mostrarMsg) showStatus('Salvo no Google Sheets', 'ok');
+  } catch (e) {
+    showStatus('Erro ao salvar: ' + e.message, 'erro');
+    console.error(e);
+  }
+}
+
+function showStatus(msg, tipo) {
+  const el = document.getElementById('gs-status');
+  if (!el) return;
+  const icon = tipo === 'ok' ? ICONS.check : tipo === 'erro' ? ICONS.alert : '';
+  el.innerHTML = `<span class="toast-row">${icon}${msg}</span>`;
+  el.style.color  = tipo === 'ok' ? 'var(--green)' : tipo === 'erro' ? 'var(--red)' : 'var(--amber)';
+  el.style.opacity = '1';
+  if (tipo === 'ok') setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+// ── SIDEBAR TOGGLE (desktop + mobile drawer) ──
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile) {
+    const isOpen = sb.classList.contains('mobile-open');
+    sb.classList.toggle('mobile-open', !isOpen);
+    sb.classList.toggle('collapsed', isOpen);
+    ov.classList.toggle('active', !isOpen);
+  } else {
+    const collapsed = sb.classList.toggle('collapsed');
+    localStorage.setItem('ft_sidebar_collapsed', collapsed ? '1' : '0');
+  }
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile) {
+    sb.classList.remove('mobile-open');
+    sb.classList.add('collapsed');
+    ov.classList.remove('active');
+  } else {
+    sb.classList.add('collapsed');
+    localStorage.setItem('ft_sidebar_collapsed', '1');
+  }
+}
+document.getElementById('btn-toggle-sidebar').addEventListener('click', toggleSidebar);
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 640) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+  }
+});
+
+// ── TEMA CLARO/ESCURO ──
+function applyTheme(theme) {
+  if (theme) document.documentElement.setAttribute('data-theme', theme);
+  else document.documentElement.removeAttribute('data-theme');
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme')
+    || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('ft_theme', next);
+}
+applyTheme(localStorage.getItem('ft_theme'));
+
+// ── INIT ──
+buildTipoFilters();
+buildSidebarList();
+renderGantt();
+updateAll();
+const sidebarPref = localStorage.getItem('ft_sidebar_collapsed');
+if (window.innerWidth <= 640 || sidebarPref === '1' || (sidebarPref === null && window.innerWidth < 1400)) {
+  document.getElementById('sidebar').classList.add('collapsed');
+}
+// TEMPORARIAMENTE DESATIVADO: carregamento automático do Sheets.
+// Motivo: a planilha ainda tem os dados antigos; esta versão do arquivo já vem
+// com os 55 projetos (carteira + prospecção, ano inteiro S01-S52) prontos na tela.
+// Assim que você clicar em "Salvar no Sheets" (sobrescrevendo a planilha com
+// os dados novos), me avise para eu reativar esta linha e voltar ao carregamento
+// automático normal do dia a dia.
+// sheetsCarregar();
+</script>
+</body>
+</html>
