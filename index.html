@@ -390,7 +390,7 @@
 <header>
   <div>
     <h1>CRONOGRAMA DE PRODUÇÃO — FISCALTECH 2026</h1>
-    <div class="meta">Atualizado: 18/07/2026 · S01–S52 · Semana atual: <span class="badge">S28</span></div>
+    <div class="meta">Atualizado: 21/07/2026 · S01–S52 · Semana atual: <span class="badge">S29</span></div>
   </div>
   <div class="toolbar">
     <button class="theme-toggle" id="btn-theme" title="Alternar tema claro/escuro" onclick="toggleTheme()">
@@ -522,8 +522,8 @@
               <th>S25<br><small style="color:var(--text-muted)">22/06</small></th>
               <th>S26<br><small style="color:var(--text-muted)">29/06</small></th>
               <th>S27<br><small style="color:var(--text-muted)">06/07</small></th>
-              <th class="semana-atual">S28<br><small>13/07</small></th>
-              <th>S29<br><small style="color:var(--text-muted)">20/07</small></th>
+              <th>S28<br><small style="color:var(--text-muted)">13/07</small></th>
+              <th class="semana-atual">S29<br><small>20/07</small></th>
               <th>S30<br><small style="color:var(--text-muted)">27/07</small></th>
               <th>S31<br><small style="color:var(--text-muted)">03/08</small></th>
               <th>S32<br><small style="color:var(--text-muted)">10/08</small></th>
@@ -702,7 +702,7 @@ const SEMANAS = ['S01','S02','S03','S04','S05','S06','S07','S08','S09','S10','S1
 
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
-const SEMANA_ATUAL = 'S28';
+const SEMANA_ATUAL = 'S29';
 const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
 
 const ICONS = {
@@ -713,66 +713,70 @@ const ICONS = {
 const TIPO_KEY = {'Radar':'Radar','FAD':'FAD','Painel Solar':'Painel','HSWIM':'HSWIM','Free Flow':'FreeFlow','Redundancia':'Redundancia','PWIM':'PWIM','LSWIN':'LSWIN','FWC':'FWC','FreeFlow':'FreeFlow'};
 const TIPO_COR = {'Radar':'var(--c-radar)','FAD':'var(--c-fad)','Painel Solar':'var(--c-painel)','HSWIM':'var(--c-hswim)','Free Flow':'var(--c-freeflow)','Redundancia':'var(--c-redundancia)','PWIM':'var(--c-pwim)','LSWIN':'var(--c-lswin)','FWC':'var(--c-fwc)'};
 
-// Fonte: FM.PRD.001 (Em Carteira, aba Produção 2026, linha "Prev", ano inteiro S01-S52) + Cronograma_Fiscaltech.xlsx (Prospecção).
+// Fonte: FM.PRD.001 (Em Carteira, aba Produção 2026, ano inteiro S01-S52) + Cronograma_Fiscaltech.xlsx (Prospecção).
+// prod = Prev + Reprogramado + Não Prog. somados — é a mesma lógica da própria planilha
+// (célula "Acum Prev + Não Prog." usa =SUM(F6:F8), que soma as 3 linhas apesar do nome
+// só citar duas). Reprogramado = produção replanejada pra nova semana, ainda é previsto.
+// Não Prog. = produção extra que a planilha também conta como parte do previsto total.
 // prod = Previsto, editável célula a célula — é a única fonte usada por Un., Capacidade e o Previsto da aba Evolução.
 // realAno = Realizado, histórico de referência (linha "Real" do FM.PRD.001), usado só na aba Evolução.
 // Un. = soma das semanas de produção da linha (ver recalcGantt) — nunca editar Un. direto, ele é derivado.
 const PROJETOS = [
-  {num:'1.0', nome:'EPR FREE FLOW - LOTE 04', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S02:2, S03:3, S04:3, S14:2, S15:3}, realAno:{S02:2, S03:3, S04:3, S16:4}},
+  {num:'1.0', nome:'EPR FREE FLOW - LOTE 04', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S02:2, S03:3, S04:3, S14:2, S15:3}, realAno:{S02:2, S03:3, S04:3, S16:4, S20:1}},
   {num:'2.0', nome:'EIXO / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S01:6}, realAno:{S01:6}},
   {num:'3.0', nome:'ENTREVIAS / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Entrevias', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S01:3}, realAno:{S01:3}},
-  {num:'4.0', nome:'GOINFRA / FSC300 LASER / FSC110', tipo:'Radar', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S03:5, S04:10, S08:16, S11:14, S15:14, S19:17, S25:20, S26:15, S31:23, S35:16, S40:15, S44:15}, realAno:{S03:3, S04:4, S06:12, S14:20, S16:10, S20:4, S22:9, S25:26, S26:3, S28:9}},
-  {num:'5.0', nome:'GOINFRA / PAINEL SOLAR', tipo:'Painel Solar', cliente:'GOINFRA', status:'Em andamento', un:30, contrato:'Em Carteira', prod:{S20:10, S25:10, S26:10}, realAno:{S20:2, S25:11}},
-  {num:'6.0', nome:'GOINFRA / FAD', tipo:'FAD', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S21:1, S26:30, S27:40, S28:40, S29:40, S30:29}, realAno:{S21:1, S26:6}},
-  {num:'7.0', nome:'EPR IGUAÇU / FSC110 REV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S05:6}, realAno:{S05:6}},
-  {num:'8.0', nome:'EPR IGUAÇU / FSC110 CEV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-  {num:'9.0', nome:'EPR IGUAÇU / PAINEL SOLAR', tipo:'Painel Solar', cliente:'EPR Iguaçu', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S05:2}, realAno:{S05:2, S12:3}},
+  {num:'4.0', nome:'GOINFRA / FSC300 LASER / FSC110', tipo:'Radar', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S03:5, S04:10, S08:16, S11:14, S15:14, S19:3, S25:20, S26:15, S28:17, S31:8, S40:20, S44:20, S49:18}, realAno:{S03:3, S04:4, S06:12, S14:20, S16:10, S20:4, S22:9, S25:26, S26:3, S28:9}},
+  {num:'5.0', nome:'GOINFRA / PAINEL SOLAR', tipo:'Painel Solar', cliente:'GOINFRA', status:'Concluído', un:30, contrato:'Em Carteira', prod:{S20:10, S25:3, S27:17}, realAno:{S20:2, S25:11}},
+  {num:'6.0', nome:'GOINFRA / FAD', tipo:'FAD', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S21:1, S26:30, S27:29, S28:20, S29:20, S30:20, S40:20, S44:20, S49:20}, realAno:{S21:1, S26:6}},
+  {num:'7.0', nome:'EPR IGUAÇU / FSC110 REV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Em andamento', un:12, contrato:'Em Carteira', prod:{S05:6, S34:6}, realAno:{S05:6}},
+  {num:'8.0', nome:'EPR IGUAÇU / FSC110 CEV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S34:2}, realAno:{}},
+  {num:'9.0', nome:'EPR IGUAÇU / PAINEL SOLAR', tipo:'Painel Solar', cliente:'EPR Iguaçu', status:'Em andamento', un:7, contrato:'Em Carteira', prod:{S05:2, S12:3, S34:2}, realAno:{S05:2, S12:3}},
   {num:'10.0', nome:'EPR VIA MINEIRA / HSWIM', tipo:'HSWIM', cliente:'EPR Via Mineira', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S06:1}, realAno:{S10:1}},
   {num:'11.0', nome:'SEEC DF / FWC', tipo:'FWC', cliente:'SEEC-DF', status:'Em andamento', un:17, contrato:'Em Carteira', prod:{S15:4, S17:6, S22:3, S30:1, S36:3}, realAno:{S16:4, S21:6, S23:3}},
   {num:'12.0', nome:'SEEC DF / PAINEL SOLAR', tipo:'Painel Solar', cliente:'SEEC-DF', status:'Concluído', un:7, contrato:'Em Carteira', prod:{S22:7}, realAno:{S24:7}},
-  {num:'13.0', nome:'PPM UMO IJUÍ E VACARIA/ LSWIM', tipo:'LSWIN', cliente:'PPM UMO', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S06:1}, realAno:{S14:1}},
+  {num:'13.0', nome:'PPM UMO IJUÍ E VACARIA/ LSWIM', tipo:'LSWIN', cliente:'PPM UMO', status:'Em andamento', un:2, contrato:'Em Carteira', prod:{S06:1, S34:1}, realAno:{S14:1}},
   {num:'14.0', nome:'DNIT PPM UMO IJUÍ - PERIFÉRICOS', tipo:'LSWIN', cliente:'PPM UMO', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S18:1}, realAno:{S20:1}},
-  {num:'15.0', nome:'PPM UMO VACARIA E ELDORADO/ HSWIM + PÓRTICO', tipo:'HSWIM', cliente:'PPM UMO', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+  {num:'15.0', nome:'PPM UMO VACARIA E ELDORADO/ HSWIM + PÓRTICO', tipo:'HSWIM', cliente:'PPM UMO', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S34:1, S38:1}, realAno:{}},
   {num:'16.0', nome:'MOTIVA SOROCABANA / HSWIM', tipo:'HSWIM', cliente:'Motiva Sorocabana', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S16:3}, realAno:{S21:3}},
-  {num:'17.0', nome:'MOTIVA PRVIAS / HSWIM', tipo:'HSWIM', cliente:'Motiva PRVias', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S16:2}, realAno:{S21:1}},
-  {num:'18.0', nome:'AGETRAN / FSC110 ASV', tipo:'Radar', cliente:'AGETRAN', status:'Em andamento', un:2, contrato:'Em Carteira', prod:{S23:1, S29:1}, realAno:{S03:1, S23:1}},
+  {num:'17.0', nome:'MOTIVA PRVIAS / HSWIM', tipo:'HSWIM', cliente:'Motiva PRVias', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S16:2}, realAno:{S21:1, S26:1}},
+  {num:'18.0', nome:'AGETRAN / FSC110 ASV', tipo:'Radar', cliente:'AGETRAN', status:'Em andamento', un:3, contrato:'Em Carteira', prod:{S03:1, S29:2}, realAno:{S03:1}},
   {num:'19.0', nome:'DNIT PB / CEV E REV', tipo:'Radar', cliente:'DNIT PB', status:'Concluído', un:7, contrato:'Em Carteira', prod:{S23:7}, realAno:{S24:7}},
-  {num:'20.0', nome:'DNIT PB / CEV E REV (PAINEL SOLAR)', tipo:'Painel Solar', cliente:'DNIT PB', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S28:2}, realAno:{}},
-  {num:'21.0', nome:'DNIT PB / CEC ( FWC + FSCII )', tipo:'FWC', cliente:'DNIT PB', status:'Pendente', un:4, contrato:'Em Carteira', prod:{S25:4}, realAno:{}},
+  {num:'20.0', nome:'DNIT PB / CEV E REV (PAINEL SOLAR)', tipo:'Painel Solar', cliente:'DNIT PB', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S30:2}, realAno:{}},
+  {num:'21.0', nome:'DNIT PB / CEC ( FWC + FSCII )', tipo:'FWC', cliente:'DNIT PB', status:'Pendente', un:4, contrato:'Em Carteira', prod:{S30:4}, realAno:{}},
   {num:'22.0', nome:'DNIT PB / PAINEL SOLAR', tipo:'Painel Solar', cliente:'DNIT PB', status:'Concluído', un:5, contrato:'Em Carteira', prod:{S05:5}, realAno:{S05:5}},
-  {num:'23.0', nome:'SIGVIAS / FSC110 - T48', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S10:10}},
-  {num:'24.0', nome:'SIGVIAS / FSC300 LASER', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S04:11}},
+  {num:'23.0', nome:'SIGVIAS / FSC110 - T48', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:10, contrato:'Em Carteira', prod:{S08:10}, realAno:{S10:10}},
+  {num:'24.0', nome:'SIGVIAS / FSC300 LASER', tipo:'Radar', cliente:'SIGVIAS', status:'Concluído', un:11, contrato:'Em Carteira', prod:{S04:11}, realAno:{S04:11}},
   {num:'25.0', nome:'PRVIAS - PAINEL SOLAR', tipo:'Painel Solar', cliente:'PRVias', status:'Concluído', un:11, contrato:'Em Carteira', prod:{S05:11}, realAno:{S05:11}},
   {num:'26.0', nome:'EPR HSWIM - FHC (DETECTOR DE ALTURA)', tipo:'HSWIM', cliente:'EPR', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S06:6}, realAno:{S08:6}},
   {num:'27.0', nome:'EPR FREE FLOW - LOTE 4 - BANCO DE BATERIAS', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S07:8, S14:2, S15:3}, realAno:{S09:1, S10:7, S16:5}},
   {num:'28.0', nome:'EPR FREE FLOW - LOTE 4 - TOTEM', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:14, contrato:'Em Carteira', prod:{S07:12, S12:2}, realAno:{S09:10, S10:2, S12:2}},
-  {num:'29.0', nome:'EPR FREE FLOW - LOTE 4 - CONTROLE DE ACESSO + PS', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S11:4, S17:4}},
+  {num:'29.0', nome:'EPR FREE FLOW - LOTE 4 - CONTROLE DE ACESSO + PS', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:8, contrato:'Em Carteira', prod:{S11:4, S17:4}, realAno:{S11:4, S17:4}},
   {num:'30.0', nome:'VIA CAMPO - GRUPO PÁTRIA - FREE FLOW COMPLETO', tipo:'Free Flow', cliente:'Via Campo / Grupo Pátria', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S10:2}, realAno:{S12:2}},
-  {num:'31.0', nome:'EIXO PARAPUÃ - HSWIM', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-  {num:'32.0', nome:'ECO101', tipo:'Radar', cliente:'ECO101', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S14:1}},
+  {num:'31.0', nome:'EIXO PARAPUÃ - HSWIM', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Pendente', un:1, contrato:'Em Carteira', prod:{S35:1}, realAno:{}},
+  {num:'32.0', nome:'ECO101', tipo:'Radar', cliente:'ECO101', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S13:1}, realAno:{S14:1}},
   {num:'33.0', nome:'ECO101 - PAINEL SOLAR', tipo:'Painel Solar', cliente:'ECO101', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S18:1}, realAno:{S18:1}},
   {num:'34.0', nome:'POC SMTU LONDRINA', tipo:'Radar', cliente:'SMTU Londrina', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S23:1}, realAno:{S23:1}},
   {num:'35.0', nome:'DNIT/MT - PAINEL SOLAR', tipo:'Painel Solar', cliente:'DNIT/MT', status:'Concluído', un:2, contrato:'Em Carteira', prod:{S18:2}, realAno:{S18:2}},
-  {num:'36.0', nome:'PIAF', tipo:'Radar', cliente:'—', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S24:3}},
+  {num:'36.0', nome:'PIAF', tipo:'Radar', cliente:'—', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S22:3}, realAno:{S24:3}},
   {num:'37.0', nome:'DNIT/MT - TROCA DOS EQUIPAMENTOS VELSIS', tipo:'HSWIM', cliente:'DNIT/MT', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-  {num:'38.0', nome:'DNIT/MS / FSCII CEV / REV', tipo:'Radar', cliente:'DNIT/MS', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S23:4}},
-  {num:'39.0', nome:'FOZ TECHMOBI / FSC110', tipo:'Radar', cliente:'Foz Techmobi', status:'Concluído', un:0, contrato:'Em Carteira', prod:{}, realAno:{S22:1}},
-  {num:'40.0', nome:'ARTERIS LITORAL - FWC', tipo:'FWC', cliente:'Arteris Litoral', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-  {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Em andamento', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
-  {num:'42.0', nome:'REDUNDÂNCIA EPR FREE FLOW / FAD', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Em andamento', un:19, contrato:'Em Carteira', prod:{S27:10, S28:9}, realAno:{S27:19}},
+  {num:'38.0', nome:'DNIT/MS / FSCII CEV / REV', tipo:'Radar', cliente:'DNIT/MS', status:'Concluído', un:4, contrato:'Em Carteira', prod:{S22:4}, realAno:{S23:4}},
+  {num:'39.0', nome:'FOZ TECHMOBI / FSC110', tipo:'Radar', cliente:'Foz Techmobi', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S22:1}, realAno:{S22:1}},
+  {num:'40.0', nome:'ARTERIS LITORAL - FWC', tipo:'FWC', cliente:'Arteris Litoral', status:'Pendente', un:1, contrato:'Em Carteira', prod:{S30:1}, realAno:{}},
+  {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Concluído', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
+  {num:'42.0', nome:'REDUNDÂNCIA EPR FREE FLOW / FAD', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Concluído', un:19, contrato:'Em Carteira', prod:{S27:10, S28:9}, realAno:{S27:19}},
   {num:'43.0', nome:'CNL FreeFlow / Com Sala Técnica', tipo:'Free Flow', cliente:'CNL', status:'Pendente', un:15, contrato:'Em Carteira', prod:{S44:2, S45:2, S46:2, S47:2, S48:2, S49:2, S50:3}, realAno:{}},
   {num:'44.0', nome:'LONDRINA', tipo:'Radar', cliente:'Londrina', status:'Pendente', un:41, contrato:'Em Carteira', prod:{S31:15, S32:15, S33:11}, realAno:{}},
   {num:'45.0', nome:'SEINFRA/BAHIA', tipo:'Radar', cliente:'SEINFRA BA', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-  {num:'46.0', nome:'EPR Litoral Pioneiro / Free Flow', tipo:'Free Flow', cliente:'EPR Litoral Pioneiro', status:'Pendente', un:2, contrato:'Prospecção', prod:{S36:1.0, S37:1.0}, realAno:{}},
-  {num:'47.0', nome:'Via Araucária / Free Flow *', tipo:'Free Flow', cliente:'Via Araucária', status:'Pendente', un:10, contrato:'Prospecção', prod:{S32:2.0, S33:2.0, S34:2.0, S35:2.0, S36:2.0}, realAno:{}},
-  {num:'48.0', nome:'Motiva Via Costeira / HSWIM *', tipo:'HSWIM', cliente:'Motiva Via Costeira', status:'Pendente', un:1, contrato:'Prospecção', prod:{S38:1.0}, realAno:{}},
-  {num:'49.0', nome:'Ecovias das Gerais / Radar *', tipo:'Radar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
-  {num:'50.0', nome:'Ecovias das Gerais / Painel Solar *', tipo:'Painel Solar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
-  {num:'51.0', nome:'DETRAN DF / Radar ASV', tipo:'Radar', cliente:'DETRAN DF', status:'Pendente', un:139, contrato:'Prospecção', prod:{S32:10.0, S33:10.0, S34:10.0, S35:10.0, S36:10.0, S37:10.0, S38:10.0, S39:10.0, S40:10.0, S41:10.0, S42:10.0, S43:10.0, S44:10.0, S45:9.0}, realAno:{}},
-  {num:'52.0', nome:'DER SP / HSWIM', tipo:'HSWIM', cliente:'DER SP', status:'Pendente', un:4, contrato:'Prospecção', prod:{S40:2.0, S41:2.0}, realAno:{}},
-  {num:'53.0', nome:'Motiva Pantanal / HSWIM', tipo:'HSWIM', cliente:'Motiva Pantanal', status:'Pendente', un:3, contrato:'Prospecção', prod:{S49:3.0}, realAno:{}},
-  {num:'54.0', nome:'DERSP / PWIM', tipo:'PWIM', cliente:'DERSP', status:'Pendente', un:23, contrato:'Prospecção', prod:{S42:4.0, S43:4.0, S44:4.0, S45:4.0, S46:4.0, S47:3.0}, realAno:{}},
-  {num:'55.0', nome:'FreeFlow Rota Liberdade *', tipo:'Free Flow', cliente:'—', status:'Pendente', un:4, contrato:'Prospecção', prod:{S37:2.0, S38:2.0}, realAno:{}},
+{num:'46.0', nome:'EPR Litoral Pioneiro / Free Flow', tipo:'Free Flow', cliente:'EPR Litoral Pioneiro', status:'Pendente', un:2, contrato:'Prospecção', prod:{S36:1.0, S37:1.0}, realAno:{}},
+{num:'47.0', nome:'Via Araucária / Free Flow *', tipo:'Free Flow', cliente:'Via Araucária', status:'Pendente', un:10, contrato:'Prospecção', prod:{S32:2.0, S33:2.0, S34:2.0, S35:2.0, S36:2.0}, realAno:{}},
+{num:'48.0', nome:'Motiva Via Costeira / HSWIM *', tipo:'HSWIM', cliente:'Motiva Via Costeira', status:'Pendente', un:1, contrato:'Prospecção', prod:{S38:1.0}, realAno:{}},
+{num:'49.0', nome:'Ecovias das Gerais / Radar *', tipo:'Radar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+{num:'50.0', nome:'Ecovias das Gerais / Painel Solar *', tipo:'Painel Solar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+{num:'51.0', nome:'DETRAN DF / Radar ASV', tipo:'Radar', cliente:'DETRAN DF', status:'Pendente', un:139, contrato:'Prospecção', prod:{S32:10.0, S33:10.0, S34:10.0, S35:10.0, S36:10.0, S37:10.0, S38:10.0, S39:10.0, S40:10.0, S41:10.0, S42:10.0, S43:10.0, S44:10.0, S45:9.0}, realAno:{}},
+{num:'52.0', nome:'DER SP / HSWIM', tipo:'HSWIM', cliente:'DER SP', status:'Pendente', un:4, contrato:'Prospecção', prod:{S40:2.0, S41:2.0}, realAno:{}},
+{num:'53.0', nome:'Motiva Pantanal / HSWIM', tipo:'HSWIM', cliente:'Motiva Pantanal', status:'Pendente', un:3, contrato:'Prospecção', prod:{S49:3.0}, realAno:{}},
+{num:'54.0', nome:'DERSP / PWIM', tipo:'PWIM', cliente:'DERSP', status:'Pendente', un:23, contrato:'Prospecção', prod:{S42:4.0, S43:4.0, S44:4.0, S45:4.0, S46:4.0, S47:3.0}, realAno:{}},
+{num:'55.0', nome:'FreeFlow Rota Liberdade *', tipo:'Free Flow', cliente:'—', status:'Pendente', un:4, contrato:'Prospecção', prod:{S37:2.0, S38:2.0}, realAno:{}},
 ];
 
 const CAP_BASE = {
@@ -1360,7 +1364,7 @@ function renderEvolucao() {
     gap = PROJETOS.filter(p => p.contrato === 'Em Carteira')
       .map(evoProjectGap).filter(r => r && r.gap < 0)
       .reduce((a,r) => a + r.gap, 0);
-    gapSub = 'soma dos projetos atrasados (cada um até seu próprio mês mais recente com execução)';
+    gapSub = `soma dos projetos atrasados até ${MESES_PT[TODAY_MONTH_IDX]} (mesma data pra todos)`;
   } else {
     gap = realizadoAteHoje - previstoAteHoje;
     const gapPct = previstoAteHoje>0 ? Math.round((gap/previstoAteHoje)*100) : 0;
@@ -1382,9 +1386,10 @@ function evoProjectGap(p) {
   const { prevM, realM } = evoMonthly(p.prod||{}, p.realAno||{});
   const prevCumP = evoCumulative(prevM);
   const realCumP = evoCumulative(realM);
-  let idx = -1;
-  realM.forEach((v,i) => { if (v>0) idx = i; });
-  if (idx < 0) return null;
+  // Data fixa (semana/mês atual do sistema) pra todo mundo — mesma régua usada nos
+  // cards "Previsto/Realizado até hoje". Sem isso, cada projeto tinha seu próprio
+  // "até quando" e o Total atrasado não tinha uma data única pra citar.
+  const idx = TODAY_MONTH_IDX;
   return { gap: realCumP[idx] - prevCumP[idx], mes: MESES_PT[idx] };
 }
 
