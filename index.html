@@ -134,6 +134,15 @@
   td.meta-col, th.meta-col { position:sticky; }
   th.semana-atual { color:var(--accent)!important; border-bottom:2px solid var(--accent)!important; background:var(--accent-dim)!important; }
   th.feriado { background:color-mix(in srgb, var(--red) 22%, var(--surface2))!important; color:var(--red)!important; }
+  /* Destaque da semana atual/feriado desce até o fim da coluna (não só no cabeçalho) —
+     aplicado via JS (highlightWeekColumns) porque a coluna certa depende do texto do
+     th (S01..S52), não dá pra travar num nth-child fixo no CSS. */
+  td.semana-atual { background:var(--accent-dim); }
+  tbody tr:hover td.semana-atual { background:color-mix(in srgb, var(--accent-dim) 65%, var(--surface2)); }
+  tbody tr.total-row td.semana-atual { background:color-mix(in srgb, var(--accent-dim) 55%, var(--surface2)); }
+  td.feriado { background:color-mix(in srgb, var(--red) 10%, var(--surface)); }
+  tbody tr:hover td.feriado { background:color-mix(in srgb, var(--red) 16%, var(--surface2)); }
+  tbody tr.total-row td.feriado { background:color-mix(in srgb, var(--red) 14%, var(--surface2)); }
   tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
   tbody tr:last-child { border-bottom:none; }
   tbody tr:hover { background:var(--surface2); }
@@ -219,6 +228,15 @@
   .cap-table-wrap table tbody td.over { color:var(--red); font-weight:800; }
   .cap-table-wrap table tbody td.warn { color:var(--amber); font-weight:700; }
   .cap-table-wrap table tbody tr.total-row { background:var(--surface2); border-top:2px solid var(--border); font-weight:700; }
+  /* Mesmo padrão de destaque do Gantt: semana atual/feriado desce até o fim da coluna. */
+  .cap-table-wrap table thead tr th.semana-atual { color:var(--accent); background:var(--accent-dim); }
+  .cap-table-wrap table thead tr th.feriado { background:color-mix(in srgb, var(--red) 22%, var(--surface2)); color:var(--red); }
+  .cap-table-wrap table tbody td.semana-atual { background:var(--accent-dim); }
+  .cap-table-wrap table tbody tr:hover td.semana-atual { background:color-mix(in srgb, var(--accent-dim) 65%, var(--surface2)); }
+  .cap-table-wrap table tbody tr.total-row td.semana-atual { background:color-mix(in srgb, var(--accent-dim) 55%, var(--surface2)); }
+  .cap-table-wrap table tbody td.feriado { background:color-mix(in srgb, var(--red) 10%, var(--surface)); }
+  .cap-table-wrap table tbody tr:hover td.feriado { background:color-mix(in srgb, var(--red) 16%, var(--surface2)); }
+  .cap-table-wrap table tbody tr.total-row td.feriado { background:color-mix(in srgb, var(--red) 14%, var(--surface2)); }
   .ocupacao-row td { background:var(--surface2); }
   .occ-cell { font-size:10px; }
   .occ-ok{color:var(--green)} .occ-warn{color:var(--amber)} .occ-over{color:var(--red)}
@@ -711,6 +729,7 @@ const SEMANAS = ['S01','S02','S03','S04','S05','S06','S07','S08','S09','S10','S1
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
 const SEMANA_ATUAL = 'S29';
+const FERIADO_SEMANAS = ['S48','S52'];
 const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
 const CURRENT_WEEK_NUM = parseInt(SEMANA_ATUAL.slice(1), 10);
 // Corte de "até hoje" = última semana JÁ CONCLUÍDA (semana atual ainda está em
@@ -1066,6 +1085,7 @@ function renderGantt() {
     ${SEMANAS.map(s=>`<td class="col-week" style="text-align:center" id="tot-${s}">0</td>`).join('')}`;
   body.appendChild(tot);
   freezeGanttPanes();
+  highlightWeekColumns(document.getElementById('gantt-table'));
 }
 
 // Congela cabeçalho + colunas Projeto..Contrato no Gantt (como "congelar painéis"
@@ -1097,6 +1117,29 @@ window.addEventListener('resize', () => {
   clearTimeout(freezeResizeTimer);
   freezeResizeTimer = setTimeout(freezeGanttPanes, 150);
 });
+
+// Destaque da semana atual/feriado descendo até o fim da coluna — mesmo padrão no
+// Gantt e na aba Capacidade (produção por tipo + % ocupação). A coluna é achada
+// pelo texto do th (S01..S52) porque cada tabela tem colunas de referência em
+// número diferente antes das semanas (não dá pra travar num nth-child fixo).
+function highlightWeekColumns(table) {
+  if (!table) return;
+  const headerRow = [...table.querySelectorAll('thead tr')].pop();
+  if (!headerRow) return;
+  [...headerRow.children].forEach((th, i) => {
+    const m = th.textContent.trim().match(/^S\d{2}/);
+    const wk = m && m[0];
+    const isHoje = wk === SEMANA_ATUAL;
+    const isFeriado = wk && FERIADO_SEMANAS.includes(wk);
+    th.classList.toggle('semana-atual', !!isHoje);
+    th.classList.toggle('feriado', !!isFeriado);
+    const colIndex = i + 1;
+    table.querySelectorAll(`tbody tr > :nth-child(${colIndex})`).forEach(td => {
+      td.classList.toggle('semana-atual', !!isHoje);
+      td.classList.toggle('feriado', !!isFeriado);
+    });
+  });
+}
 
 function bindEditableRow(tr, idx) {
   tr.querySelectorAll('.col-week').forEach(c => {
@@ -1272,6 +1315,9 @@ function renderCapacidade() {
     return `<td class="occ-cell ${cls}">${somaPct > 0 ? somaPct + '%' : ''}</td>`;
   }).join('');
   occBody.appendChild(totOcc);
+
+  highlightWeekColumns(document.getElementById('cap-table'));
+  highlightWeekColumns(document.getElementById('occ-table'));
 }
 
 // ── EVOLUÇÃO (previsto x realizado) ──
