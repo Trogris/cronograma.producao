@@ -1717,6 +1717,24 @@ async function sheetsSalvar(mostrarMsg = true) {
   if (mostrarMsg) showStatus('Salvando…', 'loading');
   try {
     const projs  = coletarProjsDom();
+
+    // Trava de segurança: se o que vamos gravar não tem NENHUM Realizado mas a
+    // planilha atual tem, é sinal de algo errado (página desatualizada, bug,
+    // schema antigo) tentando sobrescrever — aborta em vez de apagar o
+    // histórico de Realizado de todo mundo (já aconteceu uma vez nesta planilha).
+    const novoRealSum = projs.reduce((a,p) => a + Object.values(p.realAno||{}).reduce((x,y)=>x+y,0), 0);
+    if (novoRealSum === 0) {
+      const res0 = await fetch(WEBAPP_URL + '?t=' + Date.now());
+      const data0 = await res0.json();
+      const rows0 = data0.values || [];
+      const header0 = rows0[0] || [];
+      const realIdx0 = header0.map((h,i) => String(h).startsWith('R_') ? i : -1).filter(i => i >= 0);
+      const sheetRealSum = rows0.slice(1).reduce((acc,row) => acc + realIdx0.reduce((a,i) => a + (parseFloat(row[i])||0), 0), 0);
+      if (sheetRealSum > 0) {
+        throw new Error('Bloqueado: isso apagaria o Realizado já salvo. Dê F5 na página e tente de novo.');
+      }
+    }
+
     const values = [SHEET_HEADER, ...projetosParaLinhas(projs)];
     const body   = JSON.stringify({ values });
     // Apps Script via fetch com redirect follow
