@@ -119,12 +119,19 @@
   .section-title { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
 
   /* GANTT TABLE */
-  .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .table-wrap { overflow:auto; max-height:70vh; border:1px solid var(--border); border-radius:10px; background:var(--surface); position:relative; }
   table { border-collapse:collapse; min-width:100%; font-size:12px; }
   thead tr.months th { background:var(--surface2); border-bottom:1px solid var(--border); color:var(--text-dim); font-weight:700; font-size:11px; letter-spacing:.5px; padding:7px 5px; text-align:center; white-space:nowrap; }
   thead tr.months th.meta-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); }
   thead tr.weeks th { background:var(--surface); border-bottom:2px solid var(--border); color:var(--text-muted); font-weight:600; font-size:10px; padding:5px 4px; text-align:center; white-space:nowrap; }
   thead tr.weeks th.meta-col { text-align:left; padding-left:12px; border-right:1px solid var(--border); }
+  /* Congelar cabeçalho (linhas de mês/semana) e colunas de referência (Projeto..Contrato)
+     — o offset "left" de cada coluna é calculado em JS (freezeGanttPanes) porque a
+     largura real de cada coluna varia (nomes de projeto longos, tema, etc). */
+  thead th { position:sticky; z-index:3; }
+  thead tr.months th { top:0; z-index:4; }
+  thead th.meta-col { z-index:5; }
+  td.meta-col, th.meta-col { position:sticky; }
   th.semana-atual { color:var(--accent)!important; border-bottom:2px solid var(--accent)!important; background:var(--accent-dim)!important; }
   th.feriado { background:color-mix(in srgb, var(--red) 22%, var(--surface2))!important; color:var(--red)!important; }
   tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
@@ -133,8 +140,9 @@
   tbody tr.total-row { background:var(--surface2); border-top:2px solid var(--border); font-weight:700; color:var(--text-dim); }
   tbody tr.total-row:hover { background:var(--surface2); }
   td { padding:6px 5px; white-space:nowrap; }
-  td.meta-col { border-right:1px solid var(--border); background:var(--surface); }
+  td.meta-col { border-right:1px solid var(--border); background:var(--surface); position:sticky; z-index:2; }
   tbody tr:hover td.meta-col { background:var(--surface2); }
+  tbody tr.total-row td.meta-col { background:var(--surface2); }
   td.col-num { width:32px; min-width:32px; text-align:center; }
   td.col-proj { min-width:165px; font-weight:600; color:var(--text); }
   td.col-tipo { min-width:92px; }
@@ -1053,11 +1061,42 @@ function renderGantt() {
   });
   const tot = document.createElement('tr'); tot.className='total-row';
   tot.innerHTML = `<td class="meta-col col-num" colspan="5">TOTAL / SEM.</td>
-    <td class="meta-col" id="tot-geral" style="text-align:right">0</td>
-    <td class="meta-col">&nbsp;</td>
+    <td class="meta-col col-un" id="tot-geral" style="text-align:right">0</td>
+    <td class="meta-col col-contrato">&nbsp;</td>
     ${SEMANAS.map(s=>`<td class="col-week" style="text-align:center" id="tot-${s}">0</td>`).join('')}`;
   body.appendChild(tot);
+  freezeGanttPanes();
 }
+
+// Congela cabeçalho + colunas Projeto..Contrato no Gantt (como "congelar painéis"
+// do Excel), pra rolar as 52 semanas sem perder a referência de qual linha é qual.
+// Os offsets de "left"/"top" são medidos do DOM (não fixos no CSS) porque a largura
+// das colunas varia com o conteúdo (nome de projeto longo, tema, mobile, etc).
+function freezeGanttPanes() {
+  const table = document.getElementById('gantt-table');
+  const weeksRow = table && table.querySelector('thead tr.weeks');
+  const monthsRow = table && table.querySelector('thead tr.months');
+  if (!table || !weeksRow) return;
+
+  if (monthsRow) {
+    const h = Math.round(monthsRow.getBoundingClientRect().height);
+    weeksRow.querySelectorAll('th').forEach(th => { th.style.top = h + 'px'; });
+  }
+
+  const cols = ['col-num','col-proj','col-tipo','col-cliente','col-status','col-un','col-contrato'];
+  let acc = 0;
+  cols.forEach(cls => {
+    const ref = weeksRow.querySelector('.' + cls);
+    if (!ref) return;
+    table.querySelectorAll('.' + cls).forEach(el => { el.style.left = acc + 'px'; });
+    acc += ref.getBoundingClientRect().width;
+  });
+}
+let freezeResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(freezeResizeTimer);
+  freezeResizeTimer = setTimeout(freezeGanttPanes, 150);
+});
 
 function bindEditableRow(tr, idx) {
   tr.querySelectorAll('.col-week').forEach(c => {
@@ -1076,11 +1115,15 @@ function bindEditableRow(tr, idx) {
   if (nomeCell) nomeCell.addEventListener('input', () => {
     PROJETOS[idx].nome = nomeCell.textContent.trim();
     refreshSidebarItem(idx);
+    clearTimeout(freezeResizeTimer);
+    freezeResizeTimer = setTimeout(freezeGanttPanes, 150);
   });
   const clienteCell = tr.querySelector('.col-cliente');
   if (clienteCell) clienteCell.addEventListener('input', () => {
     PROJETOS[idx].cliente = clienteCell.textContent.trim();
     refreshSidebarItem(idx);
+    clearTimeout(freezeResizeTimer);
+    freezeResizeTimer = setTimeout(freezeGanttPanes, 150);
   });
 }
 
