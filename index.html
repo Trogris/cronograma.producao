@@ -1542,10 +1542,14 @@ function exportCSV() {
 
 // ── GOOGLE SHEETS INTEGRATION (via Apps Script) ──
 
-const SHEET_HEADER = ['num','nome','tipo','cliente','status','un','contrato',...SEMANAS];
+// R_S01..R_S52 = Realizado (realAno) — colunas separadas das de Previsto (prod),
+// senão o Realizado (usado só na aba Evolução) some a cada load do Sheets.
+const REAL_SEMANAS = SEMANAS.map(s => 'R_' + s);
+const SHEET_HEADER = ['num','nome','tipo','cliente','status','un','contrato',...SEMANAS,...REAL_SEMANAS];
 
 function projetosParaLinhas(projs) {
   return projs.map(p => SHEET_HEADER.map(col => {
+    if (col.startsWith('R_')) return (p.realAno && p.realAno[col.slice(2)]) || '';
     if (SEMANAS.includes(col)) return p.prod[col] || '';
     return p[col] !== undefined ? p[col] : '';
   }));
@@ -1555,7 +1559,11 @@ function linhaParaProjeto(row) {
   const p = {};
   SHEET_HEADER.forEach((col, i) => {
     const val = row[i] !== undefined ? row[i] : '';
-    if (SEMANAS.includes(col)) {
+    if (col.startsWith('R_')) {
+      if (!p.realAno) p.realAno = {};
+      const n = parseFloat(val);
+      if (!isNaN(n) && n > 0) p.realAno[col.slice(2)] = n;
+    } else if (SEMANAS.includes(col)) {
       if (!p.prod) p.prod = {};
       const n = parseFloat(val);
       if (!isNaN(n) && n > 0) p.prod[col] = n;
@@ -1566,6 +1574,7 @@ function linhaParaProjeto(row) {
     }
   });
   if (!p.prod) p.prod = {};
+  if (!p.realAno) p.realAno = {};
   return p;
 }
 
@@ -1708,13 +1717,9 @@ const sidebarPref = localStorage.getItem('ft_sidebar_collapsed');
 if (window.innerWidth <= 640 || sidebarPref === '1' || (sidebarPref === null && window.innerWidth < 1400)) {
   document.getElementById('sidebar').classList.add('collapsed');
 }
-// TEMPORARIAMENTE DESATIVADO: carregamento automático do Sheets.
-// Motivo: a planilha ainda tem os dados antigos; esta versão do arquivo já vem
-// com os 55 projetos (carteira + prospecção, ano inteiro S01-S52) prontos na tela.
-// Assim que você clicar em "Salvar no Sheets" (sobrescrevendo a planilha com
-// os dados novos), me avise para eu reativar esta linha e voltar ao carregamento
-// automático normal do dia a dia.
-// sheetsCarregar();
+// Carrega do Google Sheets ao abrir a página — assim uma edição salva com
+// "Salvar no Sheets" aparece pra todo mundo (inclusive você mesmo, no F5).
+sheetsCarregar();
 </script>
 </body>
 </html>
