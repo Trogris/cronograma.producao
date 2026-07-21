@@ -704,6 +704,17 @@ const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','N
 const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
 const SEMANA_ATUAL = 'S29';
 const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
+const CURRENT_WEEK_NUM = parseInt(SEMANA_ATUAL.slice(1), 10);
+// Corte de "até hoje" = última semana JÁ CONCLUÍDA (semana atual ainda está em
+// andamento — não dá pra chamar de atraso algo que só vence no fim desta semana).
+// Cortar por MÊS inteiro (ex.: Jul = S27-S30) era pior ainda: contava produção de
+// semanas futuras (S30, nem chegou) como já devida, gerando atraso falso.
+const ATRASO_CUTOFF_WEEK = CURRENT_WEEK_NUM - 1;
+function sumAteSemanaAtual(obj) {
+  let total = 0;
+  Object.entries(obj||{}).forEach(([s,v]) => { if (parseInt(s.slice(1),10) <= ATRASO_CUTOFF_WEEK) total += v; });
+  return total;
+}
 
 const ICONS = {
   check: '<svg class="ico" style="width:10px;height:10px;margin:0;vertical-align:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -1354,8 +1365,8 @@ function renderEvolucao() {
 
   chartEl.innerHTML = evoBuildSVG(prevCum, realCum, todayIdx);
 
-  const previstoAteHoje = prevCum[todayIdx];
-  const realizadoAteHoje = realCum[todayIdx];
+  const previstoAteHoje = sumAteSemanaAtual(prevAno);
+  const realizadoAteHoje = sumAteSemanaAtual(realAno);
 
   // Gap: para "Todos", NÃO usar a diferença líquida agregada (projeto adiantado esconde
   // projeto atrasado). Somamos só o atraso de cada projeto — o mesmo número da lista abaixo.
@@ -1364,7 +1375,7 @@ function renderEvolucao() {
     gap = PROJETOS.filter(p => p.contrato === 'Em Carteira')
       .map(evoProjectGap).filter(r => r && r.gap < 0)
       .reduce((a,r) => a + r.gap, 0);
-    gapSub = `soma dos projetos atrasados até ${MESES_PT[TODAY_MONTH_IDX]} (mesma data pra todos)`;
+    gapSub = `soma dos projetos atrasados até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')} (última semana concluída, mesma data pra todos)`;
   } else {
     gap = realizadoAteHoje - previstoAteHoje;
     const gapPct = previstoAteHoje>0 ? Math.round((gap/previstoAteHoje)*100) : 0;
@@ -1383,14 +1394,12 @@ function renderEvolucao() {
 
 // ── EVOLUÇÃO — ranking de atraso/adiantamento por projeto ──
 function evoProjectGap(p) {
-  const { prevM, realM } = evoMonthly(p.prod||{}, p.realAno||{});
-  const prevCumP = evoCumulative(prevM);
-  const realCumP = evoCumulative(realM);
-  // Data fixa (semana/mês atual do sistema) pra todo mundo — mesma régua usada nos
-  // cards "Previsto/Realizado até hoje". Sem isso, cada projeto tinha seu próprio
-  // "até quando" e o Total atrasado não tinha uma data única pra citar.
-  const idx = TODAY_MONTH_IDX;
-  return { gap: realCumP[idx] - prevCumP[idx], mes: MESES_PT[idx] };
+  // Corte por SEMANA atual (não por mês inteiro) pra todo mundo — mesma régua usada
+  // nos cards "Previsto/Realizado até hoje". Cortar por mês contava produção de
+  // semanas futuras dentro do mês corrente (ex.: S30 quando "hoje" é S29) como já
+  // devida, gerando atraso falso para produção que nem chegou a data ainda.
+  const gap = sumAteSemanaAtual(p.realAno) - sumAteSemanaAtual(p.prod);
+  return { gap, mes: MESES_PT[TODAY_MONTH_IDX] };
 }
 
 function renderEvoRanking(val) {
@@ -1411,7 +1420,7 @@ function renderEvoRanking(val) {
   body.innerHTML = items.map(x => {
     const g = x.r.gap;
     const pct = Math.min(100, Math.round(Math.abs(g)/maxAbs*100));
-    return `<div class="evo-rk-row" title="Até ${x.r.mes}">
+    return `<div class="evo-rk-row" title="Até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')} (${x.r.mes})">
       <span class="evo-rk-name">${x.nome}</span>
       <span class="evo-rk-bar-wrap"><span class="evo-rk-bar" style="width:${pct}%;background:var(--red)"></span></span>
       <span class="evo-rk-val neg">${Math.round(g).toLocaleString('pt-BR')} un.</span>
