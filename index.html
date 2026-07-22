@@ -118,6 +118,15 @@
   .minibar { width:7px; border-radius:2px 2px 0 0; background:var(--accent); min-height:2px; }
   .section-title { font-size:11px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
 
+  /* Filtro dedicado da aba Gantt (Projeto/Tipo/Cliente/Status/Contrato) */
+  .gantt-filter-bar { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; }
+  .gf-field { display:flex; flex-direction:column; gap:3px; min-width:130px; flex:1 1 130px; }
+  .gf-field label { font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-muted); }
+  .gf-field input, .gf-field select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 8px; color:var(--text); font-size:12px; outline:none; }
+  .gf-field input:focus, .gf-field select:focus { border-color:var(--accent); }
+  .gf-field select { appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat:no-repeat; background-position:right 6px center; background-size:14px; padding-right:24px; }
+  #gf-limpar { flex:0 0 auto; }
+
   /* GANTT TABLE */
   .table-wrap { overflow:auto; max-height:70vh; border:1px solid var(--border); border-radius:10px; background:var(--surface); position:relative; }
   table { border-collapse:collapse; min-width:100%; font-size:12px; }
@@ -320,6 +329,9 @@
   .modal-body { padding:18px 20px; display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
   .modal-body .full { grid-column:1/-1; }
   .field-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+  .field-hint { font-size:10.5px; color:var(--text-muted); margin-top:4px; }
+  .evo-select-multi { height:auto; }
+  .evo-select-multi option { padding:3px 6px; }
   .field-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
   .field-input:focus { border-color:var(--accent); }
   .field-input option { background:var(--surface2); }
@@ -563,6 +575,15 @@
         <div class="an-stat"><div class="an-label">Distribuição semanal</div><div class="minibar-wrap" id="minibar"></div></div>
       </div>
 
+      <div class="gantt-filter-bar" id="gantt-filter-bar">
+        <div class="gf-field"><label>Projeto</label><input type="text" id="gf-projeto" placeholder="Buscar projeto…" oninput="filtroGanttProjeto=this.value;applyFilters()"></div>
+        <div class="gf-field"><label>Tipo</label><select id="gf-tipo" onchange="filtroGanttTipo=this.value;applyFilters()"><option value="">Todos</option></select></div>
+        <div class="gf-field"><label>Cliente</label><input type="text" id="gf-cliente" placeholder="Buscar cliente…" oninput="filtroGanttCliente=this.value;applyFilters()"></div>
+        <div class="gf-field"><label>Status</label><select id="gf-status" onchange="filtroGanttStatus=this.value;applyFilters()"><option value="">Todos</option></select></div>
+        <div class="gf-field"><label>Contrato</label><select id="gf-contrato" onchange="filtroGanttContrato=this.value;applyFilters()"><option value="">Todos</option></select></div>
+        <button class="btn btn-sm" id="gf-limpar" onclick="limparFiltroGantt()">Limpar filtros</button>
+      </div>
+
       <div class="section-title">Gantt de Produção</div>
       <div class="table-wrap">
         <table id="gantt-table">
@@ -691,9 +712,10 @@
       <div class="evo-toolbar">
         <div class="field" style="margin:0;min-width:260px">
           <div class="field-label">Ver</div>
-          <select class="field-input" id="evo-select" onchange="renderEvolucao()">
+          <select class="field-input evo-select-multi" id="evo-select" multiple size="5" onchange="evoSelectChanged()">
             <option value="__todos__">Todos os projetos (carteira)</option>
           </select>
+          <div class="field-hint">Ctrl/Cmd + clique (ou Shift) pra selecionar vários projetos</div>
         </div>
         <button class="btn btn-primary btn-sm no-print" id="btn-gerar-relatorio" onclick="gerarRelatorioEvolucao()">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h9l3 3v4"/><path d="M6 18h12v4H6z"/><path d="M6 14h12v-2a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2z"/></svg>Gerar Relatório
@@ -921,6 +943,13 @@ let selected = new Set(PROJETOS.map((_,i)=>i));
 let activeTipos = new Set(tiposUnicos);
 let activeStatus = new Set(['andamento','pendente','concluido']);
 let activeContratos = new Set(['carteira','prospeccao']);
+// Filtro dedicado da aba Gantt (Projeto/Tipo/Cliente/Status/Contrato) — funciona
+// em conjunto com os filtros da sidebar (os dois precisam bater pra linha aparecer).
+let filtroGanttProjeto = '';
+let filtroGanttCliente = '';
+let filtroGanttTipo = '';
+let filtroGanttStatus = '';
+let filtroGanttContrato = '';
 let currentTab = 'gantt';
 
 // ── HELPERS ──
@@ -968,6 +997,7 @@ function ensureTipoTracked(tipo) {
     tiposUnicos.push(tipo);
     activeTipos.add(tipo);
     buildTipoFilters();
+    buildGanttFilterSelects();
   }
 }
 function changeTipo(sel) {
@@ -1015,7 +1045,9 @@ function abrirEvolucaoProjeto(idx) {
   // na primeira troca pra aba Evolução ele ainda está vazio, e "value = idx"
   // falha em silêncio sem isso, caindo de volta em "Todos os projetos".
   evoBuildSelect();
-  document.getElementById('evo-select').value = String(idx);
+  const sel = document.getElementById('evo-select');
+  [...sel.options].forEach(o => { o.selected = (o.value === String(idx)); });
+  evoLastSelection = new Set([String(idx)]);
   switchTab('evolucao');
 }
 
@@ -1040,6 +1072,22 @@ function buildTipoFilters() {
       <span class="filter-chip-dot" style="background:${TIPO_COR[t]||'#888'}"></span>${t}
     </span>`;
   }).join('');
+}
+
+function buildGanttFilterSelects() {
+  const opt = v => `<option value="${v}">${v}</option>`;
+  document.getElementById('gf-tipo').innerHTML = '<option value="">Todos</option>' + tiposUnicos.map(opt).join('');
+  document.getElementById('gf-status').innerHTML = '<option value="">Todos</option>' + STATUS_ALL.map(opt).join('');
+  document.getElementById('gf-contrato').innerHTML = '<option value="">Todos</option>' + CONTRATO_ALL.map(opt).join('');
+}
+function limparFiltroGantt() {
+  filtroGanttProjeto = ''; filtroGanttCliente = ''; filtroGanttTipo = ''; filtroGanttStatus = ''; filtroGanttContrato = '';
+  document.getElementById('gf-projeto').value = '';
+  document.getElementById('gf-cliente').value = '';
+  document.getElementById('gf-tipo').value = '';
+  document.getElementById('gf-status').value = '';
+  document.getElementById('gf-contrato').value = '';
+  applyFilters();
 }
 
 function buildSidebarList() {
@@ -1142,13 +1190,20 @@ function selectNone() {
   updateAll();
 }
 function applyFilters() {
+  const qProj = filtroGanttProjeto.toLowerCase();
+  const qCli = filtroGanttCliente.toLowerCase();
   document.querySelectorAll('.proj-item').forEach(el => {
     const i = +el.dataset.idx, p = PROJETOS[i];
     const stKey = STATUS_KEY[p.status] || 'pendente';
     const ctKey = p.contrato === 'Em Carteira' ? 'carteira' : 'prospeccao';
     const q = document.getElementById('search-input').value.toLowerCase();
     const show = (!q||(p.nome.toLowerCase().includes(q)||p.cliente.toLowerCase().includes(q)))
-      && activeTipos.has(p.tipo) && activeStatus.has(stKey) && activeContratos.has(ctKey);
+      && activeTipos.has(p.tipo) && activeStatus.has(stKey) && activeContratos.has(ctKey)
+      && (!qProj || p.nome.toLowerCase().includes(qProj))
+      && (!qCli || p.cliente.toLowerCase().includes(qCli))
+      && (!filtroGanttTipo || p.tipo === filtroGanttTipo)
+      && (!filtroGanttStatus || p.status === filtroGanttStatus)
+      && (!filtroGanttContrato || p.contrato === filtroGanttContrato);
     el.classList.toggle('hidden-item', !show);
   });
   updateAll();
@@ -1422,11 +1477,47 @@ function evoBuildSelect() {
   const sel = document.getElementById('evo-select');
   const carteira = PROJETOS.map((p,i)=>[p,i]).filter(([p])=>p.contrato==='Em Carteira');
   const prospec = PROJETOS.map((p,i)=>[p,i]).filter(([p])=>p.contrato!=='Em Carteira');
-  const cur = sel.value;
+  const curValues = new Set([...sel.selectedOptions].map(o=>o.value));
   sel.innerHTML = `<option value="__todos__">Todos os projetos (${carteira.length} em carteira)</option>`
     + carteira.map(([p,i]) => `<option value="${i}">${p.nome}</option>`).join('')
     + (prospec.length ? `<optgroup label="Prospecção (sem execução)">${prospec.map(([p,i])=>`<option value="${i}">${p.nome}</option>`).join('')}</optgroup>` : '');
-  if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+  let restored = false;
+  [...sel.options].forEach(o => { if (curValues.has(o.value)) { o.selected = true; restored = true; } });
+  if (!restored) sel.options[0].selected = true;
+}
+
+// Multi-seleção: "Todos" é exclusivo — marcar ele desmarca o resto e vice-versa.
+// Precisa comparar com a seleção anterior (evoLastSelection) pra saber qual
+// opção foi CLICADA agora, já que o evento onchange não diz isso sozinho —
+// só olhar o estado atual não distingue "cliquei em Todos" de "cliquei num
+// projeto específico" quando os dois já estavam marcados antes.
+let evoLastSelection = new Set(['__todos__']);
+function evoSelectChanged() {
+  const sel = document.getElementById('evo-select');
+  const todosOpt = [...sel.options].find(o => o.value === '__todos__');
+  const atual = new Set([...sel.selectedOptions].map(o => o.value));
+  const todosClicadoAgora = atual.has('__todos__') && !evoLastSelection.has('__todos__');
+  const outroClicadoAgora = [...atual].some(v => v !== '__todos__' && !evoLastSelection.has(v));
+
+  if (todosClicadoAgora) {
+    [...sel.options].forEach(o => { o.selected = (o.value === '__todos__'); });
+  } else if (outroClicadoAgora && atual.has('__todos__')) {
+    todosOpt.selected = false;
+  } else if (atual.size === 0) {
+    todosOpt.selected = true;
+  }
+
+  evoLastSelection = new Set([...sel.selectedOptions].map(o => o.value));
+  renderEvolucao();
+}
+
+// Retorna null pra "todos os projetos em carteira", ou o array de índices
+// (só os em carteira — prospecção não entra no cálculo) da seleção atual.
+function evoScopeIdxs() {
+  const sel = document.getElementById('evo-select');
+  const vals = [...sel.selectedOptions].map(o => o.value).filter(v => v !== '__todos__');
+  if (vals.length === 0) return null;
+  return vals.map(v => +v).filter(i => PROJETOS[i] && PROJETOS[i].contrato === 'Em Carteira');
 }
 
 function evoMonthly(prevAno, realAno) {
@@ -1599,7 +1690,8 @@ async function gerarRelatorioEvolucao() {
   const btn = document.getElementById('btn-gerar-relatorio');
   const panel = document.getElementById('panel-evolucao');
   const sel = document.getElementById('evo-select');
-  const escopo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : 'Todos os projetos';
+  const selecionados = [...sel.selectedOptions].map(o => o.text);
+  const escopo = selecionados.length ? selecionados.join(', ') : 'Todos os projetos';
   const dataStr = new Date().toLocaleDateString('pt-BR');
   const reportHeader = document.getElementById('evo-report-header');
   reportHeader.innerHTML = `
@@ -1649,34 +1741,46 @@ async function gerarRelatorioEvolucao() {
 
 function renderEvolucao() {
   evoBuildSelect();
-  const sel = document.getElementById('evo-select');
-  const val = sel.value || '__todos__';
+  const idxs = evoScopeIdxs(); // null = todos os em carteira; array = seleção específica
   const chartEl = document.getElementById('evo-chart');
   const statsEl = document.getElementById('evo-stats');
   const emptyEl = document.getElementById('evo-empty');
+  const multiScope = idxs === null || idxs.length > 1;
 
-  let prevAno, realAno, label;
-  if (val === '__todos__') {
+  let prevAno, realAno, label, scopeProjetos;
+  if (idxs === null) {
     ({ prevAno, realAno } = evoAggregateCarteira());
     label = 'todos os projetos em carteira';
-  } else {
-    const p = PROJETOS[+val];
-    // Prospecção não tem execução — nunca entra em previsto x realizado.
-    if (p.contrato !== 'Em Carteira') {
-      chartEl.parentElement.style.display = 'none';
-      emptyEl.style.display = 'block';
-      statsEl.innerHTML = '';
-      document.getElementById('evo-ranking-wrap').style.display = 'none';
-      return;
-    }
+    scopeProjetos = PROJETOS.filter(p => p.contrato === 'Em Carteira');
+  } else if (idxs.length === 0) {
+    // Nada selecionado (ou só prospecção, que não tem execução).
+    chartEl.parentElement.style.display = 'none';
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Selecione ao menos um projeto em carteira — prospecção ainda não tem execução (previsto x realizado) pra comparar.';
+    statsEl.innerHTML = '';
+    document.getElementById('evo-ranking-wrap').style.display = 'none';
+    return;
+  } else if (idxs.length === 1) {
+    const p = PROJETOS[idxs[0]];
     prevAno = p.prod || {}; realAno = p.realAno || {};
     label = p.nome;
+    scopeProjetos = [p];
+  } else {
+    scopeProjetos = idxs.map(i => PROJETOS[i]);
+    const prevAgg = {}, realAgg = {};
+    scopeProjetos.forEach(p => {
+      Object.entries(p.prod||{}).forEach(([s,v]) => { prevAgg[s] = (prevAgg[s]||0) + v; });
+      Object.entries(p.realAno||{}).forEach(([s,v]) => { realAgg[s] = (realAgg[s]||0) + v; });
+    });
+    prevAno = prevAgg; realAno = realAgg;
+    label = `${idxs.length} projetos selecionados`;
   }
 
   const semPrev = Object.keys(prevAno).length === 0;
   if (semPrev) {
     chartEl.parentElement.style.display = 'none';
     emptyEl.style.display = 'block';
+    emptyEl.textContent = 'Este projeto ainda está em prospecção — não há execução (previsto x realizado) para comparar.';
     statsEl.innerHTML = '';
     document.getElementById('evo-ranking-wrap').style.display = 'none';
     return;
@@ -1697,13 +1801,12 @@ function renderEvolucao() {
   const previstoAteHoje = sumAteSemanaAtual(prevAno);
   const realizadoAteHoje = sumAteSemanaAtual(realAno);
 
-  // Gap: para "Todos", NÃO usar a diferença líquida agregada (projeto adiantado esconde
-  // projeto atrasado). Somamos só o atraso de cada projeto — o mesmo número da lista abaixo.
+  // Gap: com mais de um projeto no escopo, NÃO usar a diferença líquida agregada
+  // (projeto adiantado esconde projeto atrasado). Somamos só o atraso de cada
+  // projeto — o mesmo número da lista abaixo.
   let gap, gapSub;
-  if (val === '__todos__') {
-    gap = PROJETOS.filter(p => p.contrato === 'Em Carteira')
-      .map(evoProjectGap).filter(r => r && r.gap < 0)
-      .reduce((a,r) => a + r.gap, 0);
+  if (multiScope) {
+    gap = scopeProjetos.map(evoProjectGap).filter(r => r && r.gap < 0).reduce((a,r) => a + r.gap, 0);
     gapSub = `soma dos projetos atrasados até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')} (última semana concluída)`;
   } else {
     gap = realizadoAteHoje - previstoAteHoje;
@@ -1716,9 +1819,9 @@ function renderEvolucao() {
     <div class="evo-stat"><div class="evo-stat-lbl">Previsto total (ano)</div><div class="evo-stat-val">${Math.round(prevCum[11]).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">un. — ${label}</div></div>
     <div class="evo-stat"><div class="evo-stat-lbl">Previsto até ${todayIdx>=0?MESES_PT[todayIdx]:'—'}</div><div class="evo-stat-val">${Math.round(previstoAteHoje).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">acumulado no plano</div></div>
     <div class="evo-stat"><div class="evo-stat-lbl">Realizado até ${todayIdx>=0?MESES_PT[todayIdx]:'—'}</div><div class="evo-stat-val">${Math.round(realizadoAteHoje).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">acumulado executado</div></div>
-    <div class="evo-stat ${gapCls}"><div class="evo-stat-lbl">${val==='__todos__'?'Total atrasado':'Gap'}</div><div class="evo-stat-val">${gap>0?'+':''}${Math.round(gap).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">${gapSub}</div></div>`;
+    <div class="evo-stat ${gapCls}"><div class="evo-stat-lbl">${multiScope?'Total atrasado':'Gap'}</div><div class="evo-stat-val">${gap>0?'+':''}${Math.round(gap).toLocaleString('pt-BR')}</div><div class="evo-stat-sub">${gapSub}</div></div>`;
 
-  renderEvoRanking(val);
+  renderEvoRanking(multiScope ? scopeProjetos : null);
 }
 
 // ── EVOLUÇÃO — ranking de atraso/adiantamento por projeto ──
@@ -1731,14 +1834,13 @@ function evoProjectGap(p) {
   return { gap, mes: MESES_PT[TODAY_MONTH_IDX] };
 }
 
-function renderEvoRanking(val) {
+function renderEvoRanking(scopeProjetos) {
   const wrap = document.getElementById('evo-ranking-wrap');
   const body = document.getElementById('evo-ranking');
-  if (val !== '__todos__') { wrap.style.display = 'none'; return; }
+  if (!scopeProjetos) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
 
-  const items = PROJETOS
-    .filter(p => p.contrato === 'Em Carteira')
+  const items = scopeProjetos
     .map(p => ({ nome: p.nome, r: evoProjectGap(p) }))
     .filter(x => x.r && x.r.gap < 0)
     .sort((a,b) => a.r.gap - b.r.gap);
@@ -2057,6 +2159,7 @@ applyTheme(localStorage.getItem('ft_theme'));
 
 // ── INIT ──
 buildTipoFilters();
+buildGanttFilterSelects();
 buildSidebarList();
 renderGantt();
 updateAll();
