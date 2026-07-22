@@ -849,9 +849,9 @@ const PROJETOS = [
   {num:'1.0', nome:'EPR FREE FLOW - LOTE 04', tipo:'Free Flow', cliente:'EPR Free Flow', status:'Concluído', un:13, contrato:'Em Carteira', prod:{S02:2, S03:3, S04:3, S14:2, S15:3}, realAno:{S02:2, S03:3, S04:3, S16:4, S20:1}},
   {num:'2.0', nome:'EIXO / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Eixo Parapuã', status:'Concluído', un:6, contrato:'Em Carteira', prod:{S01:6}, realAno:{S01:6}},
   {num:'3.0', nome:'ENTREVIAS / KIT METROLOGICO + INTERFACE', tipo:'HSWIM', cliente:'Entrevias', status:'Concluído', un:3, contrato:'Em Carteira', prod:{S01:3}, realAno:{S01:3}},
-  {num:'4.0', nome:'GOINFRA / FSC300 LASER / FSC110', tipo:'Radar', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S03:5, S04:10, S08:16, S11:14, S15:14, S19:3, S25:20, S26:15, S28:17, S31:8, S40:20, S44:20, S49:18}, realAno:{S03:3, S04:4, S06:12, S14:20, S16:10, S20:4, S22:9, S25:26, S26:3, S28:9}},
-  {num:'5.0', nome:'GOINFRA / PAINEL SOLAR', tipo:'Painel Solar', cliente:'GOINFRA', status:'Concluído', un:30, contrato:'Em Carteira', prod:{S20:10, S25:3, S27:17}, realAno:{S20:2, S25:11}},
-  {num:'6.0', nome:'GOINFRA / FAD', tipo:'FAD', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S21:1, S26:30, S27:29, S28:20, S29:20, S30:20, S40:20, S44:20, S49:20}, realAno:{S21:1, S26:6}},
+  {num:'4.0', nome:'GOINFRA / FSC300 LASER / FSC110', tipo:'Radar', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S03:5, S04:10, S08:16, S11:14, S15:14, S19:3, S25:20, S26:15, S28:14, S30:15, S40:20, S44:20, S49:14}, realAno:{S03:3, S04:4, S06:12, S14:20, S16:10, S20:4, S22:9, S25:26, S26:3, S28:9, S29:5}},
+  {num:'5.0', nome:'GOINFRA / PAINEL SOLAR', tipo:'Painel Solar', cliente:'GOINFRA', status:'Concluído', un:30, contrato:'Em Carteira', prod:{S20:10, S25:3, S30:17}, realAno:{S20:2, S25:11}},
+  {num:'6.0', nome:'GOINFRA / FAD', tipo:'FAD', cliente:'GOINFRA', status:'Em andamento', un:180, contrato:'Em Carteira', prod:{S21:1, S31:30, S32:29, S33:20, S34:20, S35:20, S40:20, S44:20, S49:20}, realAno:{S21:1, S26:6, S29:3}},
   {num:'7.0', nome:'EPR IGUAÇU / FSC110 REV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Em andamento', un:12, contrato:'Em Carteira', prod:{S05:6, S34:6}, realAno:{S05:6}},
   {num:'8.0', nome:'EPR IGUAÇU / FSC110 CEV', tipo:'Radar', cliente:'EPR Iguaçu', status:'Pendente', un:2, contrato:'Em Carteira', prod:{S34:2}, realAno:{}},
   {num:'9.0', nome:'EPR IGUAÇU / PAINEL SOLAR', tipo:'Painel Solar', cliente:'EPR Iguaçu', status:'Em andamento', un:7, contrato:'Em Carteira', prod:{S05:2, S12:3, S34:2}, realAno:{S05:2, S12:3}},
@@ -887,20 +887,19 @@ const PROJETOS = [
   {num:'39.0', nome:'FOZ TECHMOBI / FSC110', tipo:'Radar', cliente:'Foz Techmobi', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S22:1}, realAno:{S22:1}},
   {num:'40.0', nome:'ARTERIS LITORAL - FWC', tipo:'FWC', cliente:'Arteris Litoral', status:'Pendente', un:1, contrato:'Em Carteira', prod:{S30:1}, realAno:{}},
   {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Concluído', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
-  {num:'42.0', nome:'REDUNDÂNCIA EPR FREE FLOW / FAD', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Concluído', un:19, contrato:'Em Carteira', prod:{S27:10, S28:9}, realAno:{S27:19}},
-  {num:'43.0', nome:'CNL FreeFlow / Com Sala Técnica', tipo:'Free Flow', cliente:'CNL', status:'Pendente', un:15, contrato:'Em Carteira', prod:{S44:2, S45:2, S46:2, S47:2, S48:2, S49:2, S50:3}, realAno:{}},
-  {num:'44.0', nome:'LONDRINA', tipo:'Radar', cliente:'Londrina', status:'Pendente', un:41, contrato:'Em Carteira', prod:{S31:15, S32:15, S33:11}, realAno:{}},
-  {num:'45.0', nome:'SEINFRA/BAHIA', tipo:'Radar', cliente:'SEINFRA BA', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
-{num:'46.0', nome:'EPR Litoral Pioneiro / Free Flow', tipo:'Free Flow', cliente:'EPR Litoral Pioneiro', status:'Pendente', un:2, contrato:'Prospecção', prod:{S36:1.0, S37:1.0}, realAno:{}},
-{num:'47.0', nome:'Via Araucária / Free Flow *', tipo:'Free Flow', cliente:'Via Araucária', status:'Pendente', un:10, contrato:'Prospecção', prod:{S32:2.0, S33:2.0, S34:2.0, S35:2.0, S36:2.0}, realAno:{}},
-{num:'48.0', nome:'Motiva Via Costeira / HSWIM *', tipo:'HSWIM', cliente:'Motiva Via Costeira', status:'Pendente', un:1, contrato:'Prospecção', prod:{S38:1.0}, realAno:{}},
-{num:'49.0', nome:'Ecovias das Gerais / Radar *', tipo:'Radar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
-{num:'50.0', nome:'Ecovias das Gerais / Painel Solar *', tipo:'Painel Solar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
-{num:'51.0', nome:'DETRAN DF / Radar ASV', tipo:'Radar', cliente:'DETRAN DF', status:'Pendente', un:139, contrato:'Prospecção', prod:{S32:10.0, S33:10.0, S34:10.0, S35:10.0, S36:10.0, S37:10.0, S38:10.0, S39:10.0, S40:10.0, S41:10.0, S42:10.0, S43:10.0, S44:10.0, S45:9.0}, realAno:{}},
-{num:'52.0', nome:'DER SP / HSWIM', tipo:'HSWIM', cliente:'DER SP', status:'Pendente', un:4, contrato:'Prospecção', prod:{S40:2.0, S41:2.0}, realAno:{}},
-{num:'53.0', nome:'Motiva Pantanal / HSWIM', tipo:'HSWIM', cliente:'Motiva Pantanal', status:'Pendente', un:3, contrato:'Prospecção', prod:{S49:3.0}, realAno:{}},
-{num:'54.0', nome:'DERSP / PWIM', tipo:'PWIM', cliente:'DERSP', status:'Pendente', un:23, contrato:'Prospecção', prod:{S42:4.0, S43:4.0, S44:4.0, S45:4.0, S46:4.0, S47:3.0}, realAno:{}},
-{num:'55.0', nome:'FreeFlow Rota Liberdade *', tipo:'Free Flow', cliente:'—', status:'Pendente', un:4, contrato:'Prospecção', prod:{S37:2.0, S38:2.0}, realAno:{}},
+  {num:'42.0', nome:'CNL FreeFlow / Com Sala Técnica', tipo:'Free Flow', cliente:'CNL', status:'Pendente', un:15, contrato:'Em Carteira', prod:{S44:2, S45:2, S46:2, S47:2, S48:2, S49:2, S50:3}, realAno:{}},
+  {num:'43.0', nome:'LONDRINA', tipo:'Radar', cliente:'Londrina', status:'Pendente', un:41, contrato:'Em Carteira', prod:{S31:15, S32:15, S33:11}, realAno:{}},
+  {num:'44.0', nome:'SEINFRA/BAHIA', tipo:'Radar', cliente:'SEINFRA BA', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
+{num:'45.0', nome:'EPR Litoral Pioneiro / Free Flow', tipo:'Free Flow', cliente:'EPR Litoral Pioneiro', status:'Pendente', un:2, contrato:'Prospecção', prod:{S36:1.0, S37:1.0}, realAno:{}},
+{num:'46.0', nome:'Via Araucária / Free Flow *', tipo:'Free Flow', cliente:'Via Araucária', status:'Pendente', un:10, contrato:'Prospecção', prod:{S32:2.0, S33:2.0, S34:2.0, S35:2.0, S36:2.0}, realAno:{}},
+{num:'47.0', nome:'Motiva Via Costeira / HSWIM *', tipo:'HSWIM', cliente:'Motiva Via Costeira', status:'Pendente', un:1, contrato:'Prospecção', prod:{S38:1.0}, realAno:{}},
+{num:'48.0', nome:'Ecovias das Gerais / Radar *', tipo:'Radar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+{num:'49.0', nome:'Ecovias das Gerais / Painel Solar *', tipo:'Painel Solar', cliente:'Ecovias das Gerais', status:'Pendente', un:74, contrato:'Prospecção', prod:{S30:10.0, S31:16.0, S32:16.0, S33:16.0, S34:16.0}, realAno:{}},
+{num:'50.0', nome:'DETRAN DF / Radar ASV', tipo:'Radar', cliente:'DETRAN DF', status:'Pendente', un:139, contrato:'Prospecção', prod:{S32:10.0, S33:10.0, S34:10.0, S35:10.0, S36:10.0, S37:10.0, S38:10.0, S39:10.0, S40:10.0, S41:10.0, S42:10.0, S43:10.0, S44:10.0, S45:9.0}, realAno:{}},
+{num:'51.0', nome:'DER SP / HSWIM', tipo:'HSWIM', cliente:'DER SP', status:'Pendente', un:4, contrato:'Prospecção', prod:{S40:2.0, S41:2.0}, realAno:{}},
+{num:'52.0', nome:'Motiva Pantanal / HSWIM', tipo:'HSWIM', cliente:'Motiva Pantanal', status:'Pendente', un:3, contrato:'Prospecção', prod:{S49:3.0}, realAno:{}},
+{num:'53.0', nome:'DERSP / PWIM', tipo:'PWIM', cliente:'DERSP', status:'Pendente', un:23, contrato:'Prospecção', prod:{S42:4.0, S43:4.0, S44:4.0, S45:4.0, S46:4.0, S47:3.0}, realAno:{}},
+{num:'54.0', nome:'FreeFlow Rota Liberdade *', tipo:'Free Flow', cliente:'—', status:'Pendente', un:4, contrato:'Prospecção', prod:{S37:2.0, S38:2.0}, realAno:{}},
 ];
 
 const CAP_BASE = {
@@ -1489,6 +1488,7 @@ function renderAderencia() {
   const monthly = computeAderenciaMensal(weekly);
 
   const fmtPct = v => v===null ? '—' : `${Math.round(v)}%`;
+  const fmtPct1 = v => v===null ? '—' : `${v.toFixed(1)}%`;
   const badge = v => { const t = aderenciaTier(v); return t ? `<span class="ader-tier-badge" style="background:${t.solid}">${t.n}</span>` : ''; };
   const cellCls = v => { const t = aderenciaTier(v); return t ? t.css : ''; };
 
@@ -1508,8 +1508,8 @@ function renderAderencia() {
   const avgAno = avgOf(weeklyFechadas.map(w=>w.pct));
 
   document.getElementById('ader-stats').innerHTML = `
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do mês</div><div class="evo-stat-val">${fmtPct(avgMes)}${badge(avgMes)}</div><div class="evo-stat-sub">${mesAtualNome}, semanas já fechadas até ${cutoffWeekKey}</div></div>
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do ano</div><div class="evo-stat-val">${fmtPct(avgAno)}${badge(avgAno)}</div><div class="evo-stat-sub">desde ${MESES_PT[0]} até ${cutoffWeekKey} (última semana fechada)</div></div>`;
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do mês</div><div class="evo-stat-val">${fmtPct1(avgMes)}${badge(avgMes)}</div><div class="evo-stat-sub">${mesAtualNome}, semanas já fechadas até ${cutoffWeekKey}</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do ano</div><div class="evo-stat-val">${fmtPct1(avgAno)}${badge(avgAno)}</div><div class="evo-stat-sub">desde ${MESES_PT[0]} até ${cutoffWeekKey} (última semana fechada)</div></div>`;
 
   const weekTable = document.getElementById('ader-week-table');
   weekTable.innerHTML = `
