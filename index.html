@@ -246,6 +246,20 @@
   .cap-table-wrap table tbody tr.total-row td.feriado { background:color-mix(in srgb, var(--red) 14%, var(--surface2)); }
   .ocupacao-row td { background:var(--surface2); }
   .occ-cell { font-size:10px; }
+
+  /* ── ABA ADERÊNCIA À PROGRAMAÇÃO ── */
+  .ader-cell { font-weight:700; font-variant-numeric:tabular-nums; }
+  .ader-n1 { background:color-mix(in srgb, var(--red) 28%, var(--surface)); color:var(--red); }
+  .ader-n2 { background:color-mix(in srgb, var(--amber) 28%, var(--surface)); color:var(--amber); }
+  .ader-n3 { background:color-mix(in srgb, var(--green) 20%, var(--surface)); color:var(--green); }
+  .ader-n4 { background:color-mix(in srgb, var(--green) 38%, var(--surface)); color:var(--green); }
+  /* Semana atual/feriado aqui vira um anel por cima, sem brigar com a cor do nível */
+  .ader-cell.semana-atual { box-shadow:inset 0 0 0 2px var(--accent); }
+  .ader-cell.feriado { box-shadow:inset 0 0 0 2px var(--red); }
+  .ader-tier-badge { display:inline-block; font-size:10px; font-weight:800; padding:1px 7px; border-radius:10px; color:#fff; margin-left:6px; vertical-align:middle; }
+  .ader-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; }
+  .ader-legend-chip { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); }
+  .ader-legend-dot { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
   .occ-ok{color:var(--green)} .occ-warn{color:var(--amber)} .occ-over{color:var(--red)}
 
   /* ── ABA EVOLUÇÃO (previsto x realizado) ── */
@@ -459,6 +473,9 @@
   <div class="tab" data-tab="evolucao" onclick="switchTab('evolucao')">
     <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg>Previsto vs Realizado
   </div>
+  <div class="tab" data-tab="aderencia" onclick="switchTab('aderencia')">
+    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg>Aderência à Programação
+  </div>
 </div>
 
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -665,6 +682,23 @@
         <div class="evo-ranking" id="evo-ranking"></div>
       </div>
       <div class="evo-empty" id="evo-empty" style="display:none">Este projeto ainda está em prospecção — não há execução (previsto x realizado) para comparar.</div>
+    </div>
+
+    <!-- ABA ADERÊNCIA À PROGRAMAÇÃO -->
+    <div class="tab-panel" id="panel-aderencia">
+      <div class="evo-stats" id="ader-stats"></div>
+
+      <div class="section-title">Aderência semanal — Realizado acumulado ÷ Previsto acumulado, até cada semana</div>
+      <div class="cap-table-wrap">
+        <table id="ader-week-table"></table>
+      </div>
+
+      <div class="section-title">Aderência mensal — média das semanas de cada mês</div>
+      <div class="cap-table-wrap">
+        <table id="ader-month-table"></table>
+      </div>
+
+      <div class="ader-legend" id="ader-legend"></div>
     </div>
 
   </div>
@@ -949,6 +983,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===`panel-${tab}`));
   if(tab==='capacidade') renderCapacidade();
   if(tab==='evolucao') renderEvolucao();
+  if(tab==='aderencia') renderAderencia();
 // Auto-colapsar sidebar no mobile
 if (window.innerWidth <= 640) {
   document.getElementById('sidebar').classList.add('collapsed');
@@ -1366,6 +1401,80 @@ function evoAggregateCarteira() {
     Object.entries(p.realAno||{}).forEach(([s,v]) => { realAno[s] = (realAno[s]||0) + v; });
   });
   return { prevAno, realAno };
+}
+
+// ── ADERÊNCIA À PROGRAMAÇÃO ──
+// Réplica exata da lógica da planilha FM.PRD.001 (linhas "Acum Prev + Não Prog.",
+// "Acum Real" e "ACUMULADO" da aba Produção - 2026):
+//   semanal[S]  = RealAcumuladoAté(S) ÷ PrevAcumuladoAté(S)
+//   mensal[Mês] = média simples das semanas daquele mês
+//   anual       = média das 52 semanas (ou, alternativamente, média dos 12 meses —
+//                 a planilha calcula os dois e eles não batem exatamente igual)
+const ADER_TIERS = [
+  { n:'N1', test: v => v < 87,  css:'ader-n1', solid:'var(--red)',   label:'< 87%' },
+  { n:'N2', test: v => v < 92,  css:'ader-n2', solid:'var(--amber)', label:'87% – 91,9%' },
+  { n:'N3', test: v => v < 97,  css:'ader-n3', solid:'var(--green)', label:'92% – 96,9%' },
+  { n:'N4', test: () => true,   css:'ader-n4', solid:'var(--green)', label:'≥ 97%' },
+];
+function aderenciaTier(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return null;
+  return ADER_TIERS.find(t => t.test(pct));
+}
+function computeAderenciaSemanal() {
+  const { prevAno, realAno } = evoAggregateCarteira();
+  let accPrev = 0, accReal = 0;
+  return SEMANAS.map(s => {
+    accPrev += (prevAno[s]||0);
+    accReal += (realAno[s]||0);
+    const pct = accPrev > 0 ? (accReal/accPrev*100) : null;
+    return { s, pct };
+  });
+}
+function computeAderenciaMensal(weekly) {
+  return MESES_PT.map(m => {
+    const vals = weekly.filter(w => WEEK_MONTH[w.s]===m && w.pct!==null).map(w=>w.pct);
+    const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    return { m, avg };
+  });
+}
+function avgOf(arr) {
+  const vals = arr.filter(v => v!==null && v!==undefined && !isNaN(v));
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
+function renderAderencia() {
+  const weekly = computeAderenciaSemanal();
+  const monthly = computeAderenciaMensal(weekly);
+  const avgSemanal = avgOf(weekly.map(w=>w.pct));
+  const avgMensal = avgOf(monthly.map(m=>m.avg));
+
+  const fmtPct = v => v===null ? '—' : `${Math.round(v)}%`;
+  const badge = v => { const t = aderenciaTier(v); return t ? `<span class="ader-tier-badge" style="background:${t.solid}">${t.n}</span>` : ''; };
+  const cellCls = v => { const t = aderenciaTier(v); return t ? t.css : ''; };
+
+  document.getElementById('ader-stats').innerHTML = `
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média semanal)</div><div class="evo-stat-val">${fmtPct(avgSemanal)}${badge(avgSemanal)}</div><div class="evo-stat-sub">média das 52 semanas do ano</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média mensal)</div><div class="evo-stat-val">${fmtPct(avgMensal)}${badge(avgMensal)}</div><div class="evo-stat-sub">média dos 12 meses do ano</div></div>`;
+
+  const weekTable = document.getElementById('ader-week-table');
+  weekTable.innerHTML = `
+    <thead><tr><th class="tipo-col">Semana</th>${SEMANAS.map(s=>`<th>${s}</th>`).join('')}</tr></thead>
+    <tbody><tr>
+      <td class="tipo-col">Aderência</td>
+      ${weekly.map(w => `<td class="ader-cell ${cellCls(w.pct)}" title="${w.s}: ${fmtPct(w.pct)}">${fmtPct(w.pct)}</td>`).join('')}
+    </tr></tbody>`;
+  highlightWeekColumns(weekTable);
+
+  const monthTable = document.getElementById('ader-month-table');
+  monthTable.innerHTML = `
+    <thead><tr><th class="tipo-col">Mês</th>${MESES_PT.map(m=>`<th>${m}</th>`).join('')}</tr></thead>
+    <tbody><tr>
+      <td class="tipo-col">Aderência</td>
+      ${monthly.map(mo => `<td class="ader-cell ${cellCls(mo.avg)}" title="${mo.m}: ${fmtPct(mo.avg)}">${fmtPct(mo.avg)}</td>`).join('')}
+    </tr></tbody>`;
+
+  document.getElementById('ader-legend').innerHTML = ADER_TIERS.map(t =>
+    `<span class="ader-legend-chip"><span class="ader-legend-dot" style="background:${t.solid}"></span>${t.n} · ${t.label}</span>`
+  ).join('');
 }
 
 function evoBuildSVG(prevCum, realCum, todayIdx) {
