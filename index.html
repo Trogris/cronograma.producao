@@ -112,7 +112,7 @@
   .analysis-bar { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 16px; margin-bottom:14px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
   .an-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
   .an-val { font-size:20px; font-weight:800; letter-spacing:-1px; color:var(--text); }
-  .an-sub { font-size:11px; color:var(--text-muted); }
+  .an-val-sub { font-size:12px; font-weight:600; color:var(--text-muted); letter-spacing:0; margin-left:3px; }
   .an-divider { width:1px; height:34px; background:var(--border); }
   .minibar-wrap { display:flex; gap:3px; align-items:flex-end; height:30px; }
   .minibar { width:7px; border-radius:2px 2px 0 0; background:var(--accent); min-height:2px; }
@@ -506,7 +506,7 @@
         <div class="an-divider"></div>
         <div class="an-stat"><div class="an-label">Unidades</div><div class="an-val" id="an-un">—</div></div>
         <div class="an-divider"></div>
-        <div class="an-stat"><div class="an-label">Pico semanal</div><div class="an-val" id="an-pico">—</div><div class="an-sub" id="an-pico-sem"></div></div>
+        <div class="an-stat"><div class="an-label">Pico semanal</div><div class="an-val"><span id="an-pico">—</span><span class="an-val-sub" id="an-pico-sem"></span></div></div>
         <div class="an-divider"></div>
         <div class="an-stat"><div class="an-label">Semanas ativas</div><div class="an-val" id="an-sems">—</div></div>
         <div class="an-divider"></div>
@@ -1223,7 +1223,7 @@ function updateAnalysis() {
   document.getElementById('an-proj').textContent = idxs.length;
   document.getElementById('an-un').textContent = totalUn;
   document.getElementById('an-pico').textContent = pico||0;
-  document.getElementById('an-pico-sem').textContent = picoSem;
+  document.getElementById('an-pico-sem').textContent = pico ? ` - ${picoSem}` : '';
   document.getElementById('an-sems').textContent = SEMANAS.filter(s=>totSem[s]>0).length;
   document.getElementById('minibar').innerHTML = SEMANAS.map(s => {
     const h=Math.max(2,Math.round((totSem[s]/maxV)*30));
