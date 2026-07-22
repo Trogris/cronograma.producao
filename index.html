@@ -1449,13 +1449,17 @@ function renderAderencia() {
   const badge = v => { const t = aderenciaTier(v); return t ? `<span class="ader-tier-badge" style="background:${t.solid}">${t.n}</span>` : ''; };
   const cellCls = v => { const t = aderenciaTier(v); return t ? t.css : ''; };
 
-  // Mesma métrica da planilha (E199/E201): média do ano inteiro, semanal e mensal.
-  const avgSemanal = avgOf(weekly.map(w=>w.pct));
-  const avgMensal = avgOf(monthly.map(m=>m.avg));
+  // Mesma métrica da planilha (E199/E201) — mas o intervalo do AVERAGE lá NÃO
+  // cobre o ano inteiro: ele vai só de janeiro até o mês/semana atual (por isso
+  // dava ~87%, não ~72%). Meses/semanas futuros ainda não aconteceram e não
+  // deveriam entrar numa média de desempenho "até agora".
+  const cutoffWeekIdx = SEMANAS.indexOf(`S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')}`);
+  const avgSemanal = avgOf(weekly.slice(0, cutoffWeekIdx+1).map(w=>w.pct));
+  const avgMensal = avgOf(monthly.slice(0, TODAY_MONTH_IDX+1).map(m=>m.avg));
 
   document.getElementById('ader-stats').innerHTML = `
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média semanal)</div><div class="evo-stat-val">${fmtPct(avgSemanal)}${badge(avgSemanal)}</div><div class="evo-stat-sub">média das 52 semanas do ano</div></div>
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média mensal)</div><div class="evo-stat-val">${fmtPct(avgMensal)}${badge(avgMensal)}</div><div class="evo-stat-sub">média dos 12 meses do ano</div></div>`;
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média semanal)</div><div class="evo-stat-val">${fmtPct(avgSemanal)}${badge(avgSemanal)}</div><div class="evo-stat-sub">média de S01 até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')}</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média mensal)</div><div class="evo-stat-val">${fmtPct(avgMensal)}${badge(avgMensal)}</div><div class="evo-stat-sub">média de ${MESES_PT[0]} até ${MESES_PT[TODAY_MONTH_IDX]}</div></div>`;
 
   const weekTable = document.getElementById('ader-week-table');
   weekTable.innerHTML = `
