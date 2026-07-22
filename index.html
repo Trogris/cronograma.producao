@@ -435,10 +435,20 @@
     thead tr.weeks th { font-size:9px; padding:4px 2px; }
   }
 
-  /* ── RELATÓRIO EM PDF (aba Evolução) — via impressão nativa do navegador,
-     sem lib externa. Isola #panel-evolucao e força cores claras/imprimíveis
-     independente do tema em uso na tela. ── */
+  /* ── RELATÓRIO EM PDF (aba Evolução) ──
+     Modo principal: captura #panel-evolucao com html2canvas e monta o PDF com
+     jsPDF (download direto). .pdf-export-mode força cores claras/imprimíveis
+     durante a captura, independente do tema em uso na tela.
+     Fallback (sem internet p/ carregar as libs): impressão nativa via @media print. */
   .print-only { display:none; }
+  :root.pdf-export-mode {
+    --bg:#ffffff; --surface:#ffffff; --surface2:#f3f5fa; --border:#d7dce6;
+    --accent:#2f5fd0; --accent-dim:#e3ebfb;
+    --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
+    --green:#16a34a; --amber:#b45309; --red:#dc2626;
+  }
+  .pdf-export-mode #panel-evolucao .no-print { display:none !important; }
+  .pdf-export-mode #panel-evolucao .print-only { display:block; }
   @media print {
     :root {
       --bg:#ffffff; --surface:#ffffff; --surface2:#f3f5fa; --border:#d7dce6;
@@ -685,7 +695,7 @@
             <option value="__todos__">Todos os projetos (carteira)</option>
           </select>
         </div>
-        <button class="btn btn-primary btn-sm no-print" onclick="gerarRelatorioEvolucao()">
+        <button class="btn btn-primary btn-sm no-print" id="btn-gerar-relatorio" onclick="gerarRelatorioEvolucao()">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h9l3 3v4"/><path d="M6 18h12v4H6z"/><path d="M6 14h12v-2a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2z"/></svg>Gerar Relatório
         </button>
       </div>
@@ -789,6 +799,11 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- Geração de PDF real (captura a aba como imagem + monta o PDF) — únicas libs
+     externas do app, carregadas só por causa do botão "Gerar Relatório". -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 
@@ -1573,14 +1588,60 @@ function evoBuildSVG(prevCum, realCum, todayIdx) {
 // Relatório em PDF da aba Evolução — usa a impressão nativa do navegador
 // ("Salvar como PDF" no diálogo de impressão), sem precisar de lib externa.
 // O CSS @media print isola só o #panel-evolucao e força cores claras.
-function gerarRelatorioEvolucao() {
+async function gerarRelatorioEvolucao() {
+  const btn = document.getElementById('btn-gerar-relatorio');
+  const panel = document.getElementById('panel-evolucao');
   const sel = document.getElementById('evo-select');
   const escopo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : 'Todos os projetos';
   const dataStr = new Date().toLocaleDateString('pt-BR');
-  document.getElementById('evo-report-header').innerHTML = `
+  const reportHeader = document.getElementById('evo-report-header');
+  reportHeader.innerHTML = `
     <div class="report-title">Relatório — Previsto x Realizado</div>
     <div class="report-meta">Fiscaltech · Cronograma de Produção 2026 · Gerado em ${dataStr} · Escopo: ${escopo}</div>`;
-  window.print();
+
+  // Sem as libs (ex.: sem internet pra baixar do CDN) cai no fallback de
+  // impressão nativa — pior experiência (exige "Salvar como PDF" manual), mas
+  // continua funcionando.
+  if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+    window.print();
+    return;
+  }
+
+  const textoOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Gerando PDF…';
+  document.documentElement.classList.add('pdf-export-mode');
+  reportHeader.style.display = 'block';
+
+  try {
+    const canvas = await html2canvas(panel, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = canvas.height * imgW / canvas.width;
+    let heightLeft = imgH, position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
+    heightLeft -= pageH;
+    while (heightLeft > 0) {
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
+    }
+    const nomeArquivo = `relatorio-previsto-realizado-${dataStr.replace(/\//g,'-')}.pdf`;
+    pdf.save(nomeArquivo);
+  } catch (e) {
+    console.error(e);
+    alert('Não deu pra gerar o PDF automaticamente. Erro: ' + e.message);
+  } finally {
+    document.documentElement.classList.remove('pdf-export-mode');
+    reportHeader.style.display = '';
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 }
 
 function renderEvolucao() {
