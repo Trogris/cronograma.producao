@@ -263,7 +263,10 @@
   .occ-ok{color:var(--green)} .occ-warn{color:var(--amber)} .occ-over{color:var(--red)}
 
   /* ── ABA EVOLUÇÃO (previsto x realizado) ── */
-  .evo-toolbar { margin-bottom:14px; max-width:340px; }
+  .evo-toolbar { margin-bottom:14px; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .report-header { margin-bottom:14px; }
+  .report-header .report-title { font-size:18px; font-weight:800; color:var(--text); }
+  .report-header .report-meta { font-size:11px; color:var(--text-muted); margin-top:2px; }
   .evo-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:20px; }
   .evo-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
   .evo-stat-lbl { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
@@ -430,6 +433,26 @@
     /* Cabeçalho da tabela do Gantt: reduzir para caber melhor */
     thead tr.months th { font-size:9px; padding:5px 3px; }
     thead tr.weeks th { font-size:9px; padding:4px 2px; }
+  }
+
+  /* ── RELATÓRIO EM PDF (aba Evolução) — via impressão nativa do navegador,
+     sem lib externa. Isola #panel-evolucao e força cores claras/imprimíveis
+     independente do tema em uso na tela. ── */
+  .print-only { display:none; }
+  @media print {
+    :root {
+      --bg:#ffffff; --surface:#ffffff; --surface2:#f3f5fa; --border:#d7dce6;
+      --accent:#2f5fd0; --accent-dim:#e3ebfb;
+      --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
+      --green:#16a34a; --amber:#b45309; --red:#dc2626;
+    }
+    body * { visibility:hidden; }
+    #panel-evolucao, #panel-evolucao * { visibility:visible; }
+    #panel-evolucao { position:absolute; left:0; top:0; width:100%; padding:0; margin:0; }
+    #panel-evolucao .no-print { display:none !important; }
+    #panel-evolucao .print-only { display:block; }
+    .table-wrap, .cap-table-wrap { max-height:none !important; overflow:visible !important; }
+    .evo-chart-card, .evo-stat, .evo-rk-row { break-inside:avoid; }
   }
 </style>
 </head>
@@ -662,7 +685,12 @@
             <option value="__todos__">Todos os projetos (carteira)</option>
           </select>
         </div>
+        <button class="btn btn-primary btn-sm no-print" onclick="gerarRelatorioEvolucao()">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h9l3 3v4"/><path d="M6 18h12v4H6z"/><path d="M6 14h12v-2a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2z"/></svg>Gerar Relatório
+        </button>
       </div>
+
+      <div class="print-only report-header" id="evo-report-header"></div>
 
       <div class="evo-stats" id="evo-stats"></div>
 
@@ -1542,6 +1570,19 @@ function evoBuildSVG(prevCum, realCum, todayIdx) {
   return svg;
 }
 
+// Relatório em PDF da aba Evolução — usa a impressão nativa do navegador
+// ("Salvar como PDF" no diálogo de impressão), sem precisar de lib externa.
+// O CSS @media print isola só o #panel-evolucao e força cores claras.
+function gerarRelatorioEvolucao() {
+  const sel = document.getElementById('evo-select');
+  const escopo = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : 'Todos os projetos';
+  const dataStr = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('evo-report-header').innerHTML = `
+    <div class="report-title">Relatório — Previsto x Realizado</div>
+    <div class="report-meta">Fiscaltech · Cronograma de Produção 2026 · Gerado em ${dataStr} · Escopo: ${escopo}</div>`;
+  window.print();
+}
+
 function renderEvolucao() {
   evoBuildSelect();
   const sel = document.getElementById('evo-select');
@@ -1599,7 +1640,7 @@ function renderEvolucao() {
     gap = PROJETOS.filter(p => p.contrato === 'Em Carteira')
       .map(evoProjectGap).filter(r => r && r.gap < 0)
       .reduce((a,r) => a + r.gap, 0);
-    gapSub = `soma dos projetos atrasados até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')} (última semana concluída, mesma data pra todos)`;
+    gapSub = `soma dos projetos atrasados até S${String(ATRASO_CUTOFF_WEEK).padStart(2,'0')} (última semana concluída)`;
   } else {
     gap = realizadoAteHoje - previstoAteHoje;
     const gapPct = previstoAteHoje>0 ? Math.round((gap/previstoAteHoje)*100) : 0;
