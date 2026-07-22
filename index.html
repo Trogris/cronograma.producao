@@ -643,11 +643,11 @@
               <th>S45<br><small style="color:var(--text-muted)">09/11</small></th>
               <th>S46<br><small style="color:var(--text-muted)">16/11</small></th>
               <th>S47<br><small style="color:var(--text-muted)">23/11</small></th>
-              <th class="feriado">S48<br><small>30/11</small></th>
+              <th>S48<br><small style="color:var(--text-muted)">30/11</small></th>
               <th>S49<br><small style="color:var(--text-muted)">07/12</small></th>
               <th>S50<br><small style="color:var(--text-muted)">14/12</small></th>
               <th>S51<br><small style="color:var(--text-muted)">21/12</small></th>
-              <th class="feriado">S52<br><small>28/12</small></th>
+              <th>S52<br><small style="color:var(--text-muted)">28/12</small></th>
             </tr>
           </thead>
           <tbody id="gantt-body"></tbody>
@@ -831,7 +831,7 @@ const SEMANAS = ['S01','S02','S03','S04','S05','S06','S07','S08','S09','S10','S1
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
 const SEMANA_ATUAL = 'S29';
-const FERIADO_SEMANAS = ['S48','S52'];
+const FERIADO_SEMANAS = [];
 const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
 const CURRENT_WEEK_NUM = parseInt(SEMANA_ATUAL.slice(1), 10);
 // Corte de "até hoje" = última semana JÁ CONCLUÍDA (semana atual ainda está em
