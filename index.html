@@ -152,7 +152,11 @@
   td.meta-col { border-right:1px solid var(--border); background:var(--surface); position:sticky; z-index:2; }
   tbody tr:hover td.meta-col { background:var(--surface2); }
   tbody tr.total-row td.meta-col { background:var(--surface2); }
-  td.col-num { width:32px; min-width:32px; text-align:center; }
+  td.col-num { width:32px; min-width:32px; text-align:center; padding:0; }
+  .num-chart-btn { all:unset; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:3px; width:100%; height:100%; padding:6px 5px; cursor:pointer; color:inherit; font:inherit; font-variant-numeric:tabular-nums; }
+  .num-chart-btn .num-ico { display:none; color:var(--accent); }
+  .num-chart-btn:hover { color:var(--accent); background:var(--accent-dim); }
+  .num-chart-btn:hover .num-ico { display:inline-flex; }
   td.col-proj { min-width:165px; font-weight:600; color:var(--text); }
   td.col-tipo { min-width:92px; }
   td.col-cliente { min-width:108px; color:var(--text-dim); }
@@ -751,6 +755,7 @@ const ICONS = {
   check: '<svg class="ico" style="width:10px;height:10px;margin:0;vertical-align:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
   x: '<svg class="ico" style="width:11px;height:11px;margin:0;vertical-align:-1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
   alert: '<svg class="ico" style="width:12px;height:12px;margin:0;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  chart: '<svg class="ico" style="width:12px;height:12px;margin:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 3 3 21 21 21"/><path d="M7 15l3.5-5 3 3L19 6"/></svg>',
 };
 const TIPO_KEY = {'Radar':'Radar','FAD':'FAD','Painel Solar':'Painel','HSWIM':'HSWIM','Free Flow':'FreeFlow','Redundancia':'Redundancia','PWIM':'PWIM','LSWIN':'LSWIN','FWC':'FWC','FreeFlow':'FreeFlow'};
 const TIPO_COR = {'Radar':'var(--c-radar)','FAD':'var(--c-fad)','Painel Solar':'var(--c-painel)','HSWIM':'var(--c-hswim)','Free Flow':'var(--c-freeflow)','Redundancia':'var(--c-redundancia)','PWIM':'var(--c-pwim)','LSWIN':'var(--c-lswin)','FWC':'var(--c-fwc)'};
@@ -927,6 +932,17 @@ function visibleIdx() {
 }
 
 // ── TABS ──
+// Clique no # do projeto no Gantt → atalho pra aba Evolução já filtrada nele
+// (reaproveita o gráfico/seleção que já existem lá, sem duplicar lógica).
+function abrirEvolucaoProjeto(idx) {
+  // Garante que o <select> já tem as <option> montadas antes de setar o valor —
+  // na primeira troca pra aba Evolução ele ainda está vazio, e "value = idx"
+  // falha em silêncio sem isso, caindo de volta em "Todos os projetos".
+  evoBuildSelect();
+  document.getElementById('evo-select').value = String(idx);
+  switchTab('evolucao');
+}
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
@@ -1071,7 +1087,7 @@ function renderGantt() {
     let rowTotal = 0; SEMANAS.forEach(s => rowTotal += (p.prod[s]||0));
     p.un = rowTotal;
     tr.innerHTML = `
-      <td class="meta-col col-num">${p.num}</td>
+      <td class="meta-col col-num"><button type="button" class="num-chart-btn" onclick="abrirEvolucaoProjeto(${i})" title="Ver Previsto x Realizado deste projeto"><span class="num-txt">${p.num}</span><span class="num-ico">${ICONS.chart}</span></button></td>
       <td class="meta-col col-proj" contenteditable="true">${p.nome}</td>
       <td class="meta-col col-tipo">${tipoSelectHtml(i, p.tipo)}</td>
       <td class="meta-col col-cliente" contenteditable="true">${p.cliente}</td>
