@@ -1617,20 +1617,16 @@ async function gerarRelatorioEvolucao() {
     const canvas = await html2canvas(panel, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
     const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const imgW = pageW;
-    const imgH = canvas.height * imgW / canvas.width;
-    let heightLeft = imgH, position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
-    heightLeft -= pageH;
-    while (heightLeft > 0) {
-      position = heightLeft - imgH;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
-      heightLeft -= pageH;
-    }
+    // Página única do tamanho exato do conteúdo (largura tipo A4, altura
+    // proporcional) — nada de fatiar a imagem em páginas de altura fixa, que
+    // corta texto/gráfico bem no meio quando cai numa quebra de página.
+    const pageWidthPt = 595.28;
+    const imgHeightPt = canvas.height * pageWidthPt / canvas.width;
+    // orientation precisa bater com width x height reais, senão o jsPDF troca
+    // as dimensões pra "encaixar" na orientação e a imagem sai espremida/distorcida.
+    const orientation = imgHeightPt >= pageWidthPt ? 'portrait' : 'landscape';
+    const pdf = new jsPDF({ orientation, unit: 'pt', format: [pageWidthPt, imgHeightPt] });
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidthPt, imgHeightPt);
     const nomeArquivo = `relatorio-previsto-realizado-${dataStr.replace(/\//g,'-')}.pdf`;
     pdf.save(nomeArquivo);
   } catch (e) {
