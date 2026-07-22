@@ -1437,6 +1437,10 @@ function computeAderenciaMensal(weekly) {
     return { m, avg };
   });
 }
+function avgOf(arr) {
+  const vals = arr.filter(v => v!==null && v!==undefined && !isNaN(v));
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
 function renderAderencia() {
   const weekly = computeAderenciaSemanal();
   const monthly = computeAderenciaMensal(weekly);
@@ -1445,17 +1449,13 @@ function renderAderencia() {
   const badge = v => { const t = aderenciaTier(v); return t ? `<span class="ader-tier-badge" style="background:${t.solid}">${t.n}</span>` : ''; };
   const cellCls = v => { const t = aderenciaTier(v); return t ? t.css : ''; };
 
-  // Cards mostram o "agora" — não a média do ano inteiro (que mistura semanas
-  // futuras ainda não realizadas e sempre puxa o número pra baixo sem motivo real):
-  //   - do mês: valor do mês atual na tabela mensal (mesma célula, só selecionada)
-  //   - do ano: acumulado (Real÷Prev desde janeiro) até a última semana já concluída
-  const cutoffWeek = 'S' + String(ATRASO_CUTOFF_WEEK).padStart(2,'0');
-  const aderenciaAno = weekly.find(w => w.s === cutoffWeek);
-  const aderenciaMes = monthly[TODAY_MONTH_IDX];
+  // Mesma métrica da planilha (E199/E201): média do ano inteiro, semanal e mensal.
+  const avgSemanal = avgOf(weekly.map(w=>w.pct));
+  const avgMensal = avgOf(monthly.map(m=>m.avg));
 
   document.getElementById('ader-stats').innerHTML = `
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do mês</div><div class="evo-stat-val">${fmtPct(aderenciaMes.avg)}${badge(aderenciaMes.avg)}</div><div class="evo-stat-sub">${aderenciaMes.m}, média das semanas do mês</div></div>
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do ano</div><div class="evo-stat-val">${fmtPct(aderenciaAno.pct)}${badge(aderenciaAno.pct)}</div><div class="evo-stat-sub">desde janeiro até ${cutoffWeek} (última semana concluída)</div></div>`;
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média semanal)</div><div class="evo-stat-val">${fmtPct(avgSemanal)}${badge(avgSemanal)}</div><div class="evo-stat-sub">média das 52 semanas do ano</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada (média mensal)</div><div class="evo-stat-val">${fmtPct(avgMensal)}${badge(avgMensal)}</div><div class="evo-stat-sub">média dos 12 meses do ano</div></div>`;
 
   const weekTable = document.getElementById('ader-week-table');
   weekTable.innerHTML = `
