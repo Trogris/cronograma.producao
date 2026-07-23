@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cronograma de Produção — Fiscaltech 2026</title>
+<script>
+  // Define o tema ANTES do CSS pintar a página — evita o "flash" de um tema
+  // errado (ex.: claro aparecendo por uma fração de segundo antes de trocar
+  // pro escuro). Padrão é escuro pra quem nunca escolheu um tema antes.
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('ft_theme') || 'dark');
+</script>
 <style>
   :root {
     --bg: #0f1117; --surface: #181c27; --surface2: #1e2333; --border: #2a3048;
@@ -15,24 +21,13 @@
     --c-pwim:#ec4899; --c-lswin:#84cc16; --c-fwc:#2dd4bf;
   }
   :root[data-theme="light"] {
-    --bg:#f3f5fa; --surface:#ffffff; --surface2:#eef1f7; --border:#dde3ee;
-    --accent:#2f5fd0; --accent-dim:#e3ebfb;
-    --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
-    --green:#16a34a; --amber:#b45309; --red:#dc2626;
-    --c-radar:#2456c7; --c-fad:#15803d; --c-painel:#b45309;
+    --bg:#eef1f7; --surface:#ffffff; --surface2:#e4e9f2; --border:#b9c3d6;
+    --accent:#2f5fd0; --accent-dim:#dbe5fa;
+    --text:#12151e; --text-muted:#5a6478; --text-dim:#333c4d;
+    --green:#15803d; --amber:#a3450a; --red:#c81e1e;
+    --c-radar:#2456c7; --c-fad:#15803d; --c-painel:#a3450a;
     --c-hswim:#7e22ce; --c-freeflow:#0e7490; --c-redundancia:#c2410c;
     --c-pwim:#be185d; --c-lswin:#4d7c0f; --c-fwc:#0f766e;
-  }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg:#f3f5fa; --surface:#ffffff; --surface2:#eef1f7; --border:#dde3ee;
-      --accent:#2f5fd0; --accent-dim:#e3ebfb;
-      --text:#161a24; --text-muted:#7d8699; --text-dim:#48505f;
-      --green:#16a34a; --amber:#b45309; --red:#dc2626;
-      --c-radar:#2456c7; --c-fad:#15803d; --c-painel:#b45309;
-      --c-hswim:#7e22ce; --c-freeflow:#0e7490; --c-redundancia:#c2410c;
-      --c-pwim:#be185d; --c-lswin:#4d7c0f; --c-fwc:#0f766e;
-    }
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:'Inter','Segoe UI',system-ui,sans-serif; font-size:13px; min-height:100vh; display:flex; flex-direction:column; }
@@ -352,10 +347,6 @@
   .toast-row { display:inline-flex; align-items:center; gap:6px; }
   :root[data-theme="light"] .theme-toggle .icon-moon,
   :root:not([data-theme="light"]) .theme-toggle .icon-sun { display:none; }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]):not([data-theme="light"]) .theme-toggle .icon-moon { display:none; }
-    :root:not([data-theme="dark"]):not([data-theme="light"]) .theme-toggle .icon-sun { display:block; }
-  }
 
   /* ── MOBILE ── */
   @media (max-width: 640px) {
@@ -2110,13 +2101,12 @@ function applyTheme(theme) {
   else document.documentElement.removeAttribute('data-theme');
 }
 function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme')
-    || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
   applyTheme(next);
   localStorage.setItem('ft_theme', next);
 }
-applyTheme(localStorage.getItem('ft_theme'));
+applyTheme(localStorage.getItem('ft_theme') || 'dark');
 
 // ── INIT ──
 buildTipoFilters();
