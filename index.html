@@ -489,6 +489,9 @@
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo projeto
     </button>
     <span id="gs-status" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;white-space:nowrap"></span>
+    <button class="btn btn-sm" id="btn-sync-oficial" title="Buscar Previsto/Realizado direto da planilha oficial FM.PRD.001" onclick="sincronizarComPlanilhaOficial(true)">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar Oficial
+    </button>
     <button class="btn btn-primary btn-sm" onclick="sheetsSalvar()">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar no Sheets
     </button>
@@ -1999,6 +2002,134 @@ async function sheetsCarregar() {
   } catch (e) {
     showStatus('Erro ao carregar: ' + e.message, 'erro');
     console.error(e);
+  } finally {
+    // Depois de carregar nossos dados (Tipo/Status/Contrato editados à mão),
+    // busca Previsto/Realizado direto da planilha oficial FM.PRD.001 — ela é
+    // a fonte da verdade pra esses números, nós só guardamos a classificação.
+    sincronizarComPlanilhaOficial(false);
+  }
+}
+
+// ── SINCRONIZAÇÃO COM A PLANILHA OFICIAL (FM.PRD.001, só leitura) ──
+// Busca Previsto (Prev+Reprogramado+Não Prog.) e Realizado direto da
+// planilha real de produção via um Apps Script de leitura configurado nela.
+// Mantém Tipo/Cliente/Status/Contrato dos projetos já conhecidos (isso é
+// classificação nossa, não existe na planilha oficial) e só substitui prod/
+// realAno. Projetos novos entram com classificação automática; projetos que
+// saíram da planilha oficial são removidos (mesma lógica que já vínhamos
+// fazendo manualmente a cada atualização).
+const SOURCE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzOktWtAdQ0Vg_tnqU2-WhgyMnX8J6ZL-Bq9GkDQxj-XQerBWK4qGiNkzv88sRLpvdV_g/exec';
+
+function normalizarNomeProjeto(s) {
+  return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'').toUpperCase();
+}
+
+function somarMetricas(...objs) {
+  const out = {};
+  objs.forEach(obj => Object.entries(obj||{}).forEach(([k,v]) => { if (v) out[k] = (out[k]||0) + v; }));
+  return out;
+}
+function combinarPrevistoOficial(metrics) {
+  return somarMetricas(metrics['Prev'], metrics['Reprogramado'], metrics['Reprog.'], metrics['Reprog'], metrics['Não Prog.']);
+}
+function combinarRealOficial(metrics) {
+  return somarMetricas(metrics['Real']);
+}
+
+const TIPO_RULES_JS = [
+  [['REDUNDANCIA'], 'Redundancia'],
+  [['FAD'], 'FAD'],
+  [['PAINEL SOLAR'], 'Painel Solar'],
+  [['FREE FLOW','FREEFLOW'], 'Free Flow'],
+  [['HSWIM'], 'HSWIM'],
+  [['LSWIM','LSWIN'], 'LSWIN'],
+  [['PWIM'], 'PWIM'],
+  [['FWC'], 'FWC'],
+  [['FSC110','FSC300','FSCII','CEV','REV','ASV','RADAR'], 'Radar'],
+];
+function inferirTipoOficial(nome) {
+  const n = normalizarNomeProjeto(nome);
+  for (const [kws, tipo] of TIPO_RULES_JS) {
+    for (const kw of kws) {
+      if (normalizarNomeProjeto(kw) && n.includes(normalizarNomeProjeto(kw))) return tipo;
+    }
+  }
+  return 'Radar'; // fallback razoável — usuário revisa no Tipo depois
+}
+function inferirClienteOficial(nome) {
+  const seg = nome.split(/\/| - /)[0].trim();
+  return seg || '—';
+}
+
+async function sincronizarComPlanilhaOficial(mostrarToast) {
+  try {
+    const res = await fetch(SOURCE_WEBAPP_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const sourceProjs = (data.projects || []).map(p => {
+      const nome = String(p.nome||'').split('\n')[0].trim();
+      return {
+        nome,
+        prod: combinarPrevistoOficial(p.metrics || {}),
+        realAno: combinarRealOficial(p.metrics || {})
+      };
+    });
+    const sourceByNorm = {};
+    sourceProjs.forEach(p => { sourceByNorm[normalizarNomeProjeto(p.nome)] = p; });
+
+    let atualizados = 0, novos = 0, removidos = 0;
+
+    PROJETOS.forEach(p => {
+      if (p.contrato !== 'Em Carteira') return;
+      const src = sourceByNorm[normalizarNomeProjeto(p.nome)];
+      if (!src) return;
+      const mudou = JSON.stringify(p.prod) !== JSON.stringify(src.prod) || JSON.stringify(p.realAno) !== JSON.stringify(src.realAno);
+      if (mudou) atualizados++;
+      p.prod = src.prod;
+      p.realAno = src.realAno;
+      p.un = Object.values(p.prod).reduce((a,b)=>a+b,0);
+    });
+
+    const nomesAtuais = new Set(PROJETOS.filter(p=>p.contrato==='Em Carteira').map(p=>normalizarNomeProjeto(p.nome)));
+    sourceProjs.forEach(sp => {
+      if (nomesAtuais.has(normalizarNomeProjeto(sp.nome))) return;
+      novos++;
+      PROJETOS.push({
+        num: '0.0', nome: sp.nome, tipo: inferirTipoOficial(sp.nome), cliente: inferirClienteOficial(sp.nome),
+        status: 'Pendente', un: Object.values(sp.prod).reduce((a,b)=>a+b,0), contrato: 'Em Carteira',
+        prod: sp.prod, realAno: sp.realAno
+      });
+    });
+
+    for (let i = PROJETOS.length - 1; i >= 0; i--) {
+      const p = PROJETOS[i];
+      if (p.contrato === 'Em Carteira' && !sourceByNorm[normalizarNomeProjeto(p.nome)]) {
+        PROJETOS.splice(i, 1);
+        removidos++;
+      }
+    }
+
+    if (!(atualizados || novos || removidos)) {
+      if (mostrarToast) showStatus('Já está tudo igual à planilha oficial', 'ok');
+      return;
+    }
+
+    PROJETOS.forEach((p,i) => { p.num = (i+1)+'.0'; });
+    selected = new Set(PROJETOS.map((_,i)=>i));
+    buildSidebarList();
+    renderGantt();
+    updateAll();
+    if (currentTab === 'evolucao') renderEvolucao();
+    if (currentTab === 'aderencia') renderAderencia();
+
+    const partes = [];
+    if (atualizados) partes.push(`${atualizados} atualizados`);
+    if (novos) partes.push(`${novos} novos`);
+    if (removidos) partes.push(`${removidos} removidos`);
+    showStatus(`Sincronizado com a planilha oficial: ${partes.join(', ')}`, 'ok');
+  } catch (e) {
+    console.error('Erro ao sincronizar com a planilha oficial:', e);
+    if (mostrarToast) showStatus('Erro ao sincronizar: ' + e.message, 'erro');
   }
 }
 
