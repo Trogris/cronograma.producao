@@ -824,7 +824,18 @@ const SEMANAS = ['S01','S02','S03','S04','S05','S06','S07','S08','S09','S10','S1
 
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const WEEK_MONTH = {S01:'Jan', S02:'Jan', S03:'Jan', S04:'Jan', S05:'Fev', S06:'Fev', S07:'Fev', S08:'Fev', S09:'Mar', S10:'Mar', S11:'Mar', S12:'Mar', S13:'Mar', S14:'Abr', S15:'Abr', S16:'Abr', S17:'Abr', S18:'Mai', S19:'Mai', S20:'Mai', S21:'Mai', S22:'Jun', S23:'Jun', S24:'Jun', S25:'Jun', S26:'Jun', S27:'Jul', S28:'Jul', S29:'Jul', S30:'Jul', S31:'Ago', S32:'Ago', S33:'Ago', S34:'Ago', S35:'Ago', S36:'Set', S37:'Set', S38:'Set', S39:'Set', S40:'Out', S41:'Out', S42:'Out', S43:'Out', S44:'Nov', S45:'Nov', S46:'Nov', S47:'Nov', S48:'Nov', S49:'Dez', S50:'Dez', S51:'Dez', S52:'Dez'};
-const SEMANA_ATUAL = 'S29';
+// Calculado a partir da data de hoje, não mais fixo — a semana sempre começa
+// na segunda-feira, alinhada com S01 = segunda-feira 05/01/2026 (ver cabeçalho
+// da tabela de semanas acima). Fora do intervalo do ano, trava em S01/S52.
+function calcularSemanaAtual() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioS01 = new Date(2026, 0, 5);
+  const diasDesdeS01 = Math.floor((hoje - inicioS01) / 86400000);
+  const numSemana = Math.floor(diasDesdeS01 / 7) + 1;
+  return 'S' + String(Math.min(52, Math.max(1, numSemana))).padStart(2, '0');
+}
+const SEMANA_ATUAL = calcularSemanaAtual();
 const FERIADO_SEMANAS = [];
 const TODAY_MONTH_IDX = MESES_PT.indexOf(WEEK_MONTH[SEMANA_ATUAL]);
 const CURRENT_WEEK_NUM = parseInt(SEMANA_ATUAL.slice(1), 10);
@@ -1918,13 +1929,21 @@ const SHEET_HEADER = ['num','nome','tipo','cliente','status','un','contrato',...
 // pra qualquer um que abrir o link, não só quem salvou (fica gravado na
 // planilha compartilhada, não no navegador de uma pessoa só).
 const META_MARKER = '__META__';
+const ULTIMA_ATUALIZACAO_KEY = 'ft_ultima_atualizacao';
 function atualizarMetaHeader(dataISO) {
   const el = document.getElementById('header-meta');
   if (!el || !dataISO) return;
   const d = new Date(dataISO);
   if (isNaN(d.getTime())) return;
   el.innerHTML = `Atualizado: ${d.toLocaleDateString('pt-BR')} · S01–S52 · Semana atual: <span class="badge">${SEMANA_ATUAL}</span>`;
+  // Guarda local também — assim quem abrir o arquivo sem internet, ou antes do
+  // fetch do Sheets terminar, ainda vê a última data real (não mais a data
+  // fixa gravada no HTML na hora da exportação, que ficava presa pra sempre).
+  localStorage.setItem(ULTIMA_ATUALIZACAO_KEY, dataISO);
 }
+// Mostra a melhor data disponível já no primeiro paint: a última salva neste
+// navegador ou, na falta dela, hoje — nunca a data estática do HTML.
+atualizarMetaHeader(localStorage.getItem(ULTIMA_ATUALIZACAO_KEY) || new Date().toISOString());
 
 function projetosParaLinhas(projs) {
   return projs.map(p => SHEET_HEADER.map(col => {
