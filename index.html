@@ -222,8 +222,23 @@
   .cap-status { font-size:10px; font-weight:700; margin-top:8px; padding:2px 7px; border-radius:4px; display:inline-block; }
   .st-sobrecarga{background:color-mix(in srgb, var(--red) 20%, var(--surface2));color:var(--red)} .st-atencao{background:color-mix(in srgb, var(--amber) 20%, var(--surface2));color:var(--amber)}
   .st-normal{background:color-mix(in srgb, var(--green) 20%, var(--surface2));color:var(--green)} .st-vazio{background:var(--surface2);color:var(--text-muted)}
-  .cap-edit { position:absolute; top:10px; right:10px; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; opacity:0; transition:opacity .15s; }
+  .cap-edit { position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; color:var(--text-muted); cursor:pointer; opacity:0; transition:all .15s; }
   .cap-card:hover .cap-edit { opacity:1; }
+  .cap-edit:hover { background:var(--surface2); color:var(--accent); }
+  .cap-cap-edit-row { display:flex; align-items:center; gap:5px; margin-top:2px; }
+  .cap-edit-input { width:50px; background:var(--surface2); border:1px solid var(--accent); border-radius:5px; padding:2px 5px; color:var(--text); font-size:11px; outline:none; font-family:inherit; }
+  .cap-edit-ok, .cap-edit-cancel { width:19px; height:19px; border-radius:5px; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .cap-edit-ok { background:color-mix(in srgb, var(--green) 22%, transparent); color:var(--green); }
+  .cap-edit-cancel { background:color-mix(in srgb, var(--red) 18%, transparent); color:var(--red); }
+
+  /* gráfico de ocupação semanal x capacidade */
+  .cap-chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:20px; }
+  .cap-chart-card svg { width:100%; height:auto; overflow:visible; }
+  .cap-chart-legend { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:var(--text-dim); }
+  .cap-chart-legend .leg { display:flex; align-items:center; gap:6px; }
+  .cap-chart-legend .leg-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .cap-chart-legend .leg-dot-line { width:14px; height:0; border-top:1.5px dashed var(--red); flex-shrink:0; }
+  .cap-limit-line { stroke:var(--red); stroke-width:1.5; stroke-dasharray:4 3; opacity:.75; }
 
   /* tabela de capacidade semanal */
   .cap-table-wrap { border:1px solid var(--border); border-radius:10px; overflow-x:auto; background:var(--surface); margin-bottom:20px; }
@@ -654,6 +669,12 @@
       <div class="section-title" style="margin-bottom:14px">Resumo por tipo de produto</div>
       <div class="cap-grid" id="cap-grid"></div>
 
+      <div class="section-title">Ocupação da capacidade por semana — todos os tipos</div>
+      <div class="cap-chart-card">
+        <div id="cap-chart"></div>
+        <div class="cap-chart-legend" id="cap-chart-legend"></div>
+      </div>
+
       <div class="section-title">Produção semanal por tipo — baseada na seleção atual</div>
       <div class="cap-table-wrap">
         <table id="cap-table">
@@ -937,6 +958,37 @@ const CAP_BASE = {
 };
 // capacidade total por semana (soma de todas as cap/sem dos tipos presentes)
 const CAP_TOTAL_SEM = Object.values(CAP_BASE).reduce((a,b)=>a+b,0); // 110
+
+// Capacidade editável pela aba — CAP_BASE acima é só o valor padrão de fábrica.
+// O que o usuário ajusta no card fica em CAP_OVERRIDES, salvo no localStorage
+// (por navegador, não vai pro Sheets — é um parâmetro operacional, não dado
+// de projeto). capOf()/capTotalSemanal() substituem todo uso direto de
+// CAP_BASE/CAP_TOTAL_SEM daqui pra baixo.
+const CAP_OVERRIDES_KEY = 'ft_cap_overrides';
+let CAP_OVERRIDES = {};
+try { CAP_OVERRIDES = JSON.parse(localStorage.getItem(CAP_OVERRIDES_KEY) || '{}'); } catch (e) { CAP_OVERRIDES = {}; }
+function capOf(tipo) {
+  const v = CAP_OVERRIDES[tipo];
+  return (typeof v === 'number' && v > 0) ? v : (CAP_BASE[tipo] || 1);
+}
+function capTotalSemanal() {
+  return tiposUnicos.reduce((a, t) => a + capOf(t), 0);
+}
+function setCapOverride(tipo, valor) {
+  if (valor === null || valor === '' || isNaN(valor) || valor <= 0) delete CAP_OVERRIDES[tipo];
+  else CAP_OVERRIDES[tipo] = Math.round(valor * 10) / 10;
+  localStorage.setItem(CAP_OVERRIDES_KEY, JSON.stringify(CAP_OVERRIDES));
+}
+let capEditingTipo = null;
+function iniciarEdicaoCapacidade(tipo) { capEditingTipo = tipo; renderCapacidade(); }
+function cancelarEdicaoCapacidade() { capEditingTipo = null; renderCapacidade(); }
+function confirmarEdicaoCapacidade(tipo, inputEl) {
+  const v = parseFloat((inputEl.value || '').replace(',', '.'));
+  setCapOverride(tipo, isNaN(v) ? null : v);
+  capEditingTipo = null;
+  renderCapacidade();
+  showStatus(`Capacidade de ${tipo} atualizada`, 'ok');
+}
 
 let tiposUnicos = [...new Set(PROJETOS.map(p=>p.tipo))];
 let selected = new Set(PROJETOS.map((_,i)=>i));
@@ -1385,7 +1437,8 @@ function renderCapacidade() {
   grid.innerHTML = '';
   tiposUnicos.forEach(t => {
     const total = idxs.filter(i => PROJETOS[i].tipo === t).reduce((a, i) => a + PROJETOS[i].un, 0);
-    const cap = CAP_BASE[t] || 1;
+    const cap = capOf(t);
+    const temOverride = typeof CAP_OVERRIDES[t] === 'number' && CAP_OVERRIDES[t] > 0;
     const semTotal = SEMANAS.reduce((a, s) => a + byTipo[t][s], 0);
     const maxSem = Math.max(...SEMANAS.map(s => byTipo[t][s]), 0);
     const pct = Math.min(Math.round((maxSem / cap) * 100), 200);
@@ -1393,13 +1446,26 @@ function renderCapacidade() {
     const stClass = status === 'SOBRECARGA' ? 'st-sobrecarga' : status === 'ATENÇÃO' ? 'st-atencao' : status === 'NORMAL' ? 'st-normal' : 'st-vazio';
     const cor = TIPO_COR[t] || '#888';
     const barColor = status === 'SOBRECARGA' ? 'var(--red)' : status === 'ATENÇÃO' ? 'var(--amber)' : 'var(--green)';
+    const capLineId = `cap-input-${normalizarNomeProjeto(t)}`;
+    const capLine = capEditingTipo === t
+      ? `<div class="cap-cap-edit-row" onclick="event.stopPropagation()">
+           <input type="number" min="0" step="0.5" class="cap-edit-input" id="${capLineId}" value="${cap}" autofocus
+             onkeydown="if(event.key==='Enter'){confirmarEdicaoCapacidade('${t}', this);} if(event.key==='Escape'){cancelarEdicaoCapacidade();}">
+           <span style="font-size:10px;color:var(--text-muted)">un/sem</span>
+           <button class="cap-edit-ok" title="Salvar" onclick="confirmarEdicaoCapacidade('${t}', document.getElementById('${capLineId}'))">${ICONS.check}</button>
+           <button class="cap-edit-cancel" title="Cancelar" onclick="cancelarEdicaoCapacidade()">${ICONS.x}</button>
+         </div>`
+      : `<div class="cap-cap">${cap} un/sem${temOverride ? ' <span title="Capacidade ajustada manualmente" style="color:var(--accent)">●</span>' : ''} · pico ${maxSem}</div>`;
     const div = document.createElement('div'); div.className = 'cap-card';
     div.innerHTML = `
       <div class="cap-card-accent" style="background:${cor}"></div>
+      <button class="cap-edit" title="Editar capacidade semanal" onclick="iniciarEdicaoCapacidade('${t}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
       <div style="padding-left:8px">
         <div class="cap-label">${t}</div>
         <div class="cap-total" style="color:${cor}">${total}</div>
-        <div class="cap-cap">${cap} un/sem · pico ${maxSem}</div>
+        ${capLine}
         <div class="cap-bar-bg"><div class="cap-bar-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
         <div class="cap-status ${stClass}">${status === '-' ? 'Sem demanda' : status}</div>
       </div>`;
@@ -1411,7 +1477,7 @@ function renderCapacidade() {
   capBody.innerHTML = '';
   const totaisSem = {}; SEMANAS.forEach(s => totaisSem[s] = 0);
   tiposUnicos.forEach(t => {
-    const cap = CAP_BASE[t] || 1;
+    const cap = capOf(t);
     const tr = document.createElement('tr');
     let rowTotal = 0;
     const cells = SEMANAS.map(s => {
@@ -1431,7 +1497,7 @@ function renderCapacidade() {
   // Linha total
   const totRow = document.createElement('tr'); totRow.className = 'total-row';
   const totalGeral = idxs.reduce((a, i) => a + PROJETOS[i].un, 0);
-  totRow.innerHTML = `<td class="tipo-col">TOTAL</td><td class="cap-col" style="color:var(--text-muted)">${CAP_TOTAL_SEM}/sem</td>`
+  totRow.innerHTML = `<td class="tipo-col">TOTAL</td><td class="cap-col" style="color:var(--text-muted)">${capTotalSemanal()}/sem</td>`
     + SEMANAS.map(s => `<td style="font-weight:700">${totaisSem[s] || 0}</td>`).join('')
     + `<td style="border-left:1px solid var(--border);font-weight:700;text-align:right;padding-right:8px">${totalGeral}</td>`;
   capBody.appendChild(totRow);
@@ -1440,7 +1506,7 @@ function renderCapacidade() {
   const occBody = document.getElementById('occ-body');
   occBody.innerHTML = '';
   tiposUnicos.forEach(t => {
-    const cap = CAP_BASE[t] || 1;
+    const cap = capOf(t);
     const tr = document.createElement('tr');
     tr.innerHTML = `<td class="tipo-col" style="font-size:10px">${t}</td>` + SEMANAS.map(s => {
       const v = byTipo[t][s]; const pct = Math.round((v / cap) * 100);
@@ -1455,7 +1521,7 @@ function renderCapacidade() {
     let somaPct = 0;
     tiposUnicos.forEach(t => {
       const v = byTipo[t][s];
-      if (v > 0) somaPct += Math.round((v / (CAP_BASE[t] || 1)) * 100);
+      if (v > 0) somaPct += Math.round((v / capOf(t)) * 100);
     });
     const cls = somaPct > 200 ? 'occ-over' : somaPct > 100 ? 'occ-warn' : somaPct > 0 ? 'occ-ok' : '';
     return `<td class="occ-cell ${cls}">${somaPct > 0 ? somaPct + '%' : ''}</td>`;
@@ -1464,6 +1530,67 @@ function renderCapacidade() {
 
   highlightWeekColumns(document.getElementById('cap-table'));
   highlightWeekColumns(document.getElementById('occ-table'));
+
+  renderCapChart(byTipo);
+}
+
+// ── GRÁFICO: ocupação semanal x capacidade ──
+// Barras = % da capacidade total usada em cada semana (soma de todos os tipos
+// visíveis). Linha tracejada = limite de 100% (capacidade). Verde/âmbar/
+// vermelho seguem o mesmo corte já usado nos cards e nas tabelas (80%/100%),
+// então uma cor "significa" sempre a mesma coisa em toda a aba.
+function renderCapChart(byTipo) {
+  const host = document.getElementById('cap-chart');
+  if (!host) return;
+  const capTotal = capTotalSemanal();
+  const semTotals = SEMANAS.map(s => tiposUnicos.reduce((a, t) => a + (byTipo[t][s] || 0), 0));
+  const semPct = semTotals.map(v => capTotal > 0 ? (v / capTotal) * 100 : 0);
+  const maxPct = Math.max(...semPct, 100) * 1.15;
+
+  const W = 1040, H = 260, padL = 40, padR = 12, padT = 16, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = SEMANAS.length;
+  const bw = plotW / n;
+  const x = i => padL + i * bw;
+  const y = v => padT + plotH - (Math.min(v, maxPct) / maxPct) * plotH;
+  const corDe = pct => pct > 100 ? 'var(--red)' : pct > 80 ? 'var(--amber)' : pct > 0 ? 'var(--green)' : 'var(--border)';
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+
+  // grid + eixo Y (0/50/100/max%)
+  [0, 50, 100, Math.round(maxPct)].forEach(v => {
+    const yy = y(v);
+    svg += `<line class="evo-grid-line" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/>`;
+    svg += `<text class="evo-axis-label" x="${padL - 6}" y="${yy + 3}" text-anchor="end">${v}%</text>`;
+  });
+
+  // barras
+  SEMANAS.forEach((s, i) => {
+    const pct = semPct[i];
+    const isHoje = s === SEMANA_ATUAL;
+    const bh = plotH - (y(pct) - padT);
+    const bx = x(i) + bw * 0.14, bwid = bw * 0.72;
+    svg += `<rect x="${bx.toFixed(2)}" y="${y(pct).toFixed(2)}" width="${bwid.toFixed(2)}" height="${Math.max(bh, 0).toFixed(2)}" rx="1.5" fill="${corDe(pct)}" opacity="${isHoje ? 1 : 0.82}"${isHoje ? ' stroke="var(--accent)" stroke-width="1.5"' : ''}><title>${s}${isHoje ? ' (semana atual)' : ''}: ${Math.round(pct)}% da capacidade (${Math.round(semTotals[i] * 10) / 10} de ${capTotal} un.)</title></rect>`;
+  });
+
+  // linha de capacidade (100%)
+  const y100 = y(100);
+  svg += `<line class="cap-limit-line" x1="${padL}" y1="${y100}" x2="${W - padR}" y2="${y100}"/>`;
+
+  // eixo X — só a cada 4 semanas pra não empilhar rótulo
+  SEMANAS.forEach((s, i) => {
+    if (i % 4 !== 0) return;
+    svg += `<text class="evo-axis-label" x="${(x(i) + bw / 2).toFixed(2)}" y="${H - padB + 14}" text-anchor="middle">${s}</text>`;
+  });
+
+  svg += '</svg>';
+  host.innerHTML = svg;
+
+  document.getElementById('cap-chart-legend').innerHTML = `
+    <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Normal (até 80%)</span>
+    <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Atenção (80–100%)</span>
+    <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Sobrecarga (acima de 100%)</span>
+    <span class="leg"><span class="leg-dot-line" style="border-top-color:var(--red)"></span>Limite de capacidade (100%)</span>`;
 }
 
 // ── EVOLUÇÃO (previsto x realizado) ──
