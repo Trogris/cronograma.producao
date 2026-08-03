@@ -669,12 +669,6 @@
       <div class="section-title" style="margin-bottom:14px">Resumo por tipo de produto</div>
       <div class="cap-grid" id="cap-grid"></div>
 
-      <div class="section-title">Ocupação da capacidade por semana — pior gargalo entre os tipos</div>
-      <div class="cap-chart-card">
-        <div id="cap-chart"></div>
-        <div class="cap-chart-legend" id="cap-chart-legend"></div>
-      </div>
-
       <div class="section-title">Produção semanal por tipo — baseada na seleção atual</div>
       <div class="cap-table-wrap">
         <table id="cap-table">
@@ -715,6 +709,12 @@
           </thead>
           <tbody id="occ-body"></tbody>
         </table>
+      </div>
+
+      <div class="section-title">Ocupação da capacidade por semana — pior gargalo entre os tipos</div>
+      <div class="cap-chart-card">
+        <div id="cap-chart"></div>
+        <div class="cap-chart-legend" id="cap-chart-legend"></div>
       </div>
     </div>
 
@@ -1559,7 +1559,7 @@ function renderCapChart(byTipo) {
   const semPct = semData.map(d => d.pct);
   const maxPct = Math.max(...semPct, 100) * 1.15;
 
-  const W = 1040, H = 260, padL = 40, padR = 12, padT = 16, padB = 26;
+  const W = 1040, H = 260, padL = 8, padR = 12, padT = 16, padB = 26;
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const n = SEMANAS.length;
   const bw = plotW / n;
@@ -1568,13 +1568,6 @@ function renderCapChart(byTipo) {
   const corDe = pct => pct > 100 ? 'var(--red)' : pct > 80 ? 'var(--amber)' : pct > 0 ? 'var(--green)' : 'var(--border)';
 
   let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
-
-  // grid + eixo Y (0/50/100/max%)
-  [0, 50, 100, Math.round(maxPct)].forEach(v => {
-    const yy = y(v);
-    svg += `<line class="evo-grid-line" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/>`;
-    svg += `<text class="evo-axis-label" x="${padL - 6}" y="${yy + 3}" text-anchor="end">${v}%</text>`;
-  });
 
   // barras
   SEMANAS.forEach((s, i) => {
