@@ -237,6 +237,7 @@
   .cap-chart-legend { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:var(--text-dim); }
   .cap-chart-legend .leg { display:flex; align-items:center; gap:6px; }
   .cap-chart-legend .leg-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+  .cap-chart-legend .leg-line { width:14px; height:3px; border-radius:2px; flex-shrink:0; }
   .cap-chart-legend .leg-dot-line { width:14px; height:0; border-top:1.5px dashed var(--red); flex-shrink:0; }
   .cap-limit-line { stroke:var(--red); stroke-width:1.5; stroke-dasharray:4 3; opacity:.75; }
 
@@ -709,6 +710,18 @@
           </thead>
           <tbody id="occ-body"></tbody>
         </table>
+      </div>
+
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span>Demanda ao longo do ano — total de todos os tipos</span>
+        <span style="display:flex;gap:4px">
+          <button class="btn btn-sm" id="cap-dem-semana" onclick="setDemandaModo('semana')">Semanas</button>
+          <button class="btn btn-sm" id="cap-dem-mes" onclick="setDemandaModo('mes')">Meses</button>
+        </span>
+      </div>
+      <div class="cap-chart-card">
+        <div id="cap-demanda"></div>
+        <div class="cap-chart-legend" id="cap-demanda-legend"></div>
       </div>
 
       <div class="section-title">Ocupação da capacidade por semana — pior gargalo entre os tipos</div>
@@ -1531,7 +1544,121 @@ function renderCapacidade() {
   highlightWeekColumns(document.getElementById('cap-table'));
   highlightWeekColumns(document.getElementById('occ-table'));
 
+  renderCapDemanda(byTipo);
   renderCapChart(byTipo);
+}
+
+// ── DEMANDA AO LONGO DO ANO (curva de sino) ──
+// Barras = demanda total (soma de todos os tipos) por semana. A curva por cima
+// é a mesma demanda suavizada com um kernel gaussiano (média ponderada dos
+// vizinhos), pra revelar o "formato" da demanda no ano — quando sobe, atinge o
+// pico e cai — sem o ruído semana a semana das barras cruas.
+function suavizarGauss(arr, sigma, raio) {
+  const out = [];
+  for (let i = 0; i < arr.length; i++) {
+    let somaP = 0, somaV = 0;
+    for (let k = -raio; k <= raio; k++) {
+      const j = i + k;
+      if (j < 0 || j >= arr.length) continue;
+      const w = Math.exp(-(k * k) / (2 * sigma * sigma));
+      somaP += w; somaV += w * arr[j];
+    }
+    out.push(somaP ? somaV / somaP : 0);
+  }
+  return out;
+}
+let capDemandaModo = 'semana'; // 'semana' | 'mes'
+function setDemandaModo(m) {
+  capDemandaModo = m;
+  renderCapacidade();
+}
+function renderCapDemanda(byTipo) {
+  const host = document.getElementById('cap-demanda');
+  if (!host) return;
+
+  // botões do toggle refletem o modo ativo
+  const bSem = document.getElementById('cap-dem-semana'), bMes = document.getElementById('cap-dem-mes');
+  if (bSem && bMes) {
+    bSem.classList.toggle('btn-primary', capDemandaModo === 'semana');
+    bMes.classList.toggle('btn-primary', capDemandaModo === 'mes');
+  }
+
+  const porMes = capDemandaModo === 'mes';
+  let labels, demanda, iAtual, unidadeLbl;
+  if (porMes) {
+    labels = MESES_PT;
+    demanda = MESES_PT.map(() => 0);
+    SEMANAS.forEach(s => {
+      const mi = MESES_PT.indexOf(WEEK_MONTH[s]);
+      if (mi >= 0) demanda[mi] += tiposUnicos.reduce((a, t) => a + (byTipo[t][s] || 0), 0);
+    });
+    iAtual = TODAY_MONTH_IDX;
+    unidadeLbl = 'mês';
+  } else {
+    labels = SEMANAS;
+    demanda = SEMANAS.map(s => tiposUnicos.reduce((a, t) => a + (byTipo[t][s] || 0), 0));
+    iAtual = SEMANAS.indexOf(SEMANA_ATUAL);
+    unidadeLbl = 'semana';
+  }
+  // menos pontos (meses) => janela de suavização menor
+  const suave = porMes ? suavizarGauss(demanda, 0.9, 2) : suavizarGauss(demanda, 1.6, 4);
+  const maxV = Math.max(...demanda, ...suave, 1);
+  const totalAno = demanda.reduce((a, b) => a + b, 0);
+  const iPico = demanda.indexOf(Math.max(...demanda));
+
+  const W = 1040, H = 260, padL = 8, padR = 12, padT = 22, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = labels.length;
+  const bw = plotW / n;
+  const x = i => padL + i * bw + bw / 2;
+  const y = v => padT + plotH - (v / (maxV * 1.12)) * plotH;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+
+  // barras de demanda crua (discretas)
+  labels.forEach((lbl, i) => {
+    const isHoje = i === iAtual;
+    const bx = padL + i * bw + bw * (porMes ? 0.24 : 0.18), bwid = bw * (porMes ? 0.52 : 0.64);
+    const yy = y(demanda[i]), bh = Math.max(plotH - (yy - padT), 0);
+    svg += `<rect x="${bx.toFixed(2)}" y="${yy.toFixed(2)}" width="${bwid.toFixed(2)}" height="${bh.toFixed(2)}" rx="1.5" fill="var(--accent)" opacity="${isHoje ? 0.6 : 0.28}"${isHoje ? ' stroke="var(--accent)" stroke-width="1.2"' : ''}><title>${lbl}${isHoje ? ` (${unidadeLbl} atual)` : ''}: ${Math.round(demanda[i] * 10) / 10} un.</title></rect>`;
+  });
+
+  // curva suavizada (bezier) + área sob a curva
+  const pts = suave.map((v, i) => [x(i), y(v)]);
+  const linePath = arr => {
+    if (arr.length < 2) return arr.map(p => `M ${p[0]} ${p[1]}`).join(' ');
+    let d = `M ${arr[0][0].toFixed(1)} ${arr[0][1].toFixed(1)}`;
+    for (let i = 0; i < arr.length - 1; i++) {
+      const [x0, y0] = arr[i], [x1, y1] = arr[i + 1];
+      const mx = x0 + (x1 - x0) / 2;
+      d += ` C ${mx.toFixed(1)} ${y0.toFixed(1)}, ${mx.toFixed(1)} ${y1.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    }
+    return d;
+  };
+  const baseY = y(0);
+  const areaD = `${linePath(pts)} L ${pts[pts.length - 1][0].toFixed(1)} ${baseY} L ${pts[0][0].toFixed(1)} ${baseY} Z`;
+  svg += `<path d="${areaD}" fill="var(--accent)" opacity="0.12"/>`;
+  svg += `<path d="${linePath(pts)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  // marcador do pico de demanda
+  if (iPico >= 0 && demanda[iPico] > 0) {
+    svg += `<circle cx="${x(iPico).toFixed(1)}" cy="${y(demanda[iPico]).toFixed(1)}" r="3.5" fill="var(--accent)"/>`;
+    svg += `<text x="${x(iPico).toFixed(1)}" y="${(y(demanda[iPico]) - 8).toFixed(1)}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--text)">pico ${Math.round(demanda[iPico])} un · ${labels[iPico]}</text>`;
+  }
+
+  // eixo X — meses mostram todos; semanas a cada 4
+  labels.forEach((lbl, i) => {
+    if (!porMes && i % 4 !== 0) return;
+    svg += `<text class="evo-axis-label" x="${x(i).toFixed(1)}" y="${H - padB + 14}" text-anchor="middle">${lbl}</text>`;
+  });
+
+  svg += '</svg>';
+  host.innerHTML = svg;
+
+  document.getElementById('cap-demanda-legend').innerHTML = `
+    <span class="leg"><span class="leg-dot" style="background:var(--accent);opacity:.3"></span>Demanda do ${unidadeLbl} (unidades)</span>
+    <span class="leg"><span class="leg-line" style="background:var(--accent)"></span>Curva de demanda (suavizada)</span>
+    <span style="font-size:10.5px;color:var(--text-muted)">Total no ano: ${Math.round(totalAno)} un. · passe o mouse nas barras pro valor exato.</span>`;
 }
 
 // ── GRÁFICO: ocupação semanal x capacidade ──
