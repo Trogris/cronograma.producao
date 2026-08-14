@@ -2565,6 +2565,29 @@ if (window.innerWidth <= 640 || sidebarPref === '1' || (sidebarPref === null && 
 // Carrega do Google Sheets ao abrir a página — assim uma edição salva com
 // "Salvar no Sheets" aparece pra todo mundo (inclusive você mesmo, no F5).
 sheetsCarregar();
+
+// ── ATUALIZAÇÃO AUTOMÁTICA PERIÓDICA ──
+// Buscar de novo a planilha oficial de tempos em tempos, com a página aberta
+// (útil pra quem deixa isso ligado numa TV/monitor de produção o dia todo,
+// sem precisar dar F5 pra ver produção/realizado atualizados). Pula o ciclo
+// se alguém estiver editando algo na hora (célula, filtro, modal de novo
+// projeto) — pra não atropelar uma edição em andamento; tenta de novo no
+// próximo ciclo.
+const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+function haEdicaoEmAndamento() {
+  const ae = document.activeElement;
+  if (ae) {
+    if (ae.isContentEditable) return true;
+    const tag = (ae.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+  }
+  if (document.querySelector('.modal-backdrop.open')) return true;
+  return false;
+}
+setInterval(() => {
+  if (haEdicaoEmAndamento()) return;
+  sincronizarComPlanilhaOficial(false);
+}, AUTO_SYNC_INTERVAL_MS);
 </script>
 </body>
 </html>
