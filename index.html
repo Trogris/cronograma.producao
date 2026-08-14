@@ -514,9 +514,6 @@
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo projeto
     </button>
     <span id="gs-status" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .4s;white-space:nowrap"></span>
-    <button class="btn btn-sm" id="btn-sync-oficial" title="Buscar Previsto/Realizado direto da planilha oficial FM.PRD.001" onclick="sincronizarComPlanilhaOficial(true)">
-      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Sincronizar Oficial
-    </button>
     <button class="btn btn-primary btn-sm" onclick="sheetsSalvar()">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar no Sheets
     </button>
@@ -815,7 +812,7 @@
           <option>Painel Solar</option>
           <option>HSWIM</option>
           <option>Free Flow</option>
-          <option>Redundancia</option>
+          <option>Redundância</option>
           <option>PWIM</option>
           <option>LSWIN</option>
           <option>FWC</option>
@@ -899,8 +896,8 @@ const ICONS = {
   alert: '<svg class="ico" style="width:12px;height:12px;margin:0;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
   chart: '<svg class="ico" style="width:12px;height:12px;margin:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 3 3 21 21 21"/><path d="M7 15l3.5-5 3 3L19 6"/></svg>',
 };
-const TIPO_KEY = {'Radar':'Radar','FAD':'FAD','Painel Solar':'Painel','HSWIM':'HSWIM','Free Flow':'FreeFlow','Redundancia':'Redundancia','PWIM':'PWIM','LSWIN':'LSWIN','FWC':'FWC','FreeFlow':'FreeFlow'};
-const TIPO_COR = {'Radar':'var(--c-radar)','FAD':'var(--c-fad)','Painel Solar':'var(--c-painel)','HSWIM':'var(--c-hswim)','Free Flow':'var(--c-freeflow)','Redundancia':'var(--c-redundancia)','PWIM':'var(--c-pwim)','LSWIN':'var(--c-lswin)','FWC':'var(--c-fwc)'};
+const TIPO_KEY = {'Radar':'Radar','FAD':'FAD','Painel Solar':'Painel','HSWIM':'HSWIM','Free Flow':'FreeFlow','Redundância':'Redundancia','PWIM':'PWIM','LSWIN':'LSWIN','FWC':'FWC','FreeFlow':'FreeFlow'};
+const TIPO_COR = {'Radar':'var(--c-radar)','FAD':'var(--c-fad)','Painel Solar':'var(--c-painel)','HSWIM':'var(--c-hswim)','Free Flow':'var(--c-freeflow)','Redundância':'var(--c-redundancia)','PWIM':'var(--c-pwim)','LSWIN':'var(--c-lswin)','FWC':'var(--c-fwc)'};
 
 // Fonte: FM.PRD.001 (Em Carteira, aba Produção 2026, ano inteiro S01-S52) + Cronograma_Fiscaltech.xlsx (Prospecção).
 // prod = Prev + Reprogramado + Não Prog. somados — é a mesma lógica da própria planilha
@@ -951,7 +948,7 @@ const PROJETOS = [
   {num:'38.0', nome:'DNIT/MS / FSCII CEV / REV', tipo:'Radar', cliente:'DNIT/MS', status:'Concluído', un:4, contrato:'Em Carteira', prod:{S22:4}, realAno:{S23:4}},
   {num:'39.0', nome:'FOZ TECHMOBI / FSC110', tipo:'Radar', cliente:'Foz Techmobi', status:'Concluído', un:1, contrato:'Em Carteira', prod:{S22:1}, realAno:{S22:1}},
   {num:'40.0', nome:'ARTERIS LITORAL - FWC', tipo:'FWC', cliente:'Arteris Litoral', status:'Pendente', un:1, contrato:'Em Carteira', prod:{S30:1}, realAno:{}},
-  {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundancia', cliente:'EPR Free Flow', status:'Concluído', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
+  {num:'41.0', nome:'REDUNDÂNCIA EPR FREE FLOW COM PAINEL SOLAR', tipo:'Redundância', cliente:'EPR Free Flow', status:'Concluído', un:8, contrato:'Em Carteira', prod:{S27:4, S28:4}, realAno:{S27:8}},
   {num:'42.0', nome:'CNL FreeFlow / Com Sala Técnica', tipo:'Free Flow', cliente:'CNL', status:'Pendente', un:15, contrato:'Em Carteira', prod:{S44:2, S45:2, S46:2, S47:2, S48:2, S49:2, S50:3}, realAno:{}},
   {num:'43.0', nome:'LONDRINA', tipo:'Radar', cliente:'Londrina', status:'Pendente', un:41, contrato:'Em Carteira', prod:{S31:15, S32:15, S33:11}, realAno:{}},
   {num:'44.0', nome:'SEINFRA/BAHIA', tipo:'Radar', cliente:'SEINFRA BA', status:'Pendente', un:0, contrato:'Em Carteira', prod:{}, realAno:{}},
@@ -968,7 +965,7 @@ const PROJETOS = [
 ];
 
 const CAP_BASE = {
-  'Redundancia': 4,
+  'Redundância': 4,
   'Free Flow':   2,
   'HSWIM':       3,
   'Radar':       15,
@@ -1026,7 +1023,7 @@ let filtroGanttContrato = '';
 let currentTab = 'gantt';
 
 // ── HELPERS ──
-const TIPOS_ALL = ['Radar','FAD','Painel Solar','HSWIM','Free Flow','Redundancia','PWIM','LSWIN','FWC'];
+const TIPOS_ALL = ['Radar','FAD','Painel Solar','HSWIM','Free Flow','Redundância','PWIM','LSWIN','FWC'];
 const STATUS_ALL = ['Em andamento','Pendente','Concluído'];
 const STATUS_CLS = {'Em andamento':'st-andamento-bg','Pendente':'st-pendente-bg','Concluído':'st-concluido-bg'};
 const STATUS_KEY = {'Em andamento':'andamento','Pendente':'pendente','Concluído':'concluido'};
@@ -1737,8 +1734,7 @@ function renderCapChart(byTipo) {
     <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Normal (até 80%)</span>
     <span class="leg"><span class="leg-dot" style="background:var(--amber)"></span>Atenção (80–100%)</span>
     <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Sobrecarga (acima de 100%)</span>
-    <span class="leg"><span class="leg-dot-line" style="border-top-color:var(--red)"></span>Limite de capacidade (100%)</span>
-    <span style="font-size:10.5px;color:var(--text-muted)">Cada barra é o tipo mais sobrecarregado da semana — passe o mouse pra ver o detalhe de todos os tipos.</span>`;
+    <span class="leg"><span class="leg-dot-line" style="border-top-color:var(--red)"></span>Limite de capacidade (100%)</span>`;
 }
 
 // ── EVOLUÇÃO (previsto x realizado) ──
@@ -2345,7 +2341,7 @@ function combinarRealOficial(metrics) {
 }
 
 const TIPO_RULES_JS = [
-  [['REDUNDANCIA'], 'Redundancia'],
+  [['REDUNDANCIA'], 'Redundância'],
   [['FAD'], 'FAD'],
   [['PAINEL SOLAR'], 'Painel Solar'],
   [['FREE FLOW','FREEFLOW'], 'Free Flow'],
@@ -2374,6 +2370,10 @@ async function sincronizarComPlanilhaOficial(mostrarToast) {
     const res = await fetch(SOURCE_WEBAPP_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
+    // A sincronização com a planilha oficial acabou de trazer os dados atuais —
+    // essa é a "última atualização" real dos números. Marca a data de hoje
+    // (mesmo que nada tenha mudado: significa que está em dia com a oficial).
+    atualizarMetaHeader(new Date().toISOString());
     const sourceProjs = (data.projects || []).map(p => {
       const nome = String(p.nome||'').split('\n')[0].trim();
       return {
