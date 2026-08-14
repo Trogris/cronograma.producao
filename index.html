@@ -2226,9 +2226,13 @@ function atualizarMetaHeader(dataISO) {
   // fixa gravada no HTML na hora da exportação, que ficava presa pra sempre).
   localStorage.setItem(ULTIMA_ATUALIZACAO_KEY, dataISO);
 }
-// Mostra a melhor data disponível já no primeiro paint: a última salva neste
-// navegador ou, na falta dela, hoje — nunca a data estática do HTML.
-atualizarMetaHeader(localStorage.getItem(ULTIMA_ATUALIZACAO_KEY) || new Date().toISOString());
+// Sempre "hoje", no instante em que a página roda — não depende de nenhuma
+// chamada de rede terminar primeiro (planilha de trabalho, planilha oficial),
+// nem de um valor salvo antes. Isso evita ficar preso numa data antiga se a
+// sincronização demorar, falhar ou for bloqueada na rede de quem estiver
+// vendo. O app já resincroniza com a planilha oficial a cada carregamento,
+// então "hoje" é sempre uma descrição honesta de quão atual é a tela.
+atualizarMetaHeader(new Date().toISOString());
 
 function projetosParaLinhas(projs) {
   return projs.map(p => SHEET_HEADER.map(col => {
@@ -2293,8 +2297,9 @@ async function sheetsCarregar() {
       showStatus('Planilha inicializada', 'ok');
       return;
     }
-    const metaRow = rows.find(r => r[0] === META_MARKER);
-    if (metaRow) atualizarMetaHeader(metaRow[1]);
+    // Não usa mais a data salva na planilha de trabalho pra mostrar "Atualizado"
+    // — isso é o que deixava a data presa (só mudava quando alguém clicava
+    // "Salvar no Sheets"). O cabeçalho já mostra "hoje" desde o primeiro paint.
     const projsCarregados = rows.slice(1).filter(r => r[0] !== META_MARKER).map(row => linhaParaProjeto(row));
     PROJETOS.length = 0;
     projsCarregados.forEach(p => PROJETOS.push(p));
