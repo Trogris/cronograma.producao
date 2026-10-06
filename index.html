@@ -1821,14 +1821,27 @@ function renderAderencia() {
 
   // Card 1: só as semanas já fechadas do MÊS VIGENTE (ex.: Jul = S27-S30, mas
   // se só S27/S28 já fecharam, a média usa só essas duas).
-  const mesAtualNome = MESES_PT[TODAY_MONTH_IDX];
-  const avgMes = avgOf(weeklyFechadas.filter(w => WEEK_MONTH[w.s] === mesAtualNome).map(w=>w.pct));
+  // Na virada do mês (ex.: S40 já é Out, mas a última semana fechada, S39, é de
+  // Set) o mês vigente ainda não tem nenhuma semana fechada e o card ficava
+  // zerado ("—"). Nesse caso mostra o último mês que já tem semana fechada.
+  const mesVigenteNome = MESES_PT[TODAY_MONTH_IDX];
+  let mesAtualNome = mesVigenteNome;
+  let avgMes = avgOf(weeklyFechadas.filter(w => WEEK_MONTH[w.s] === mesAtualNome).map(w=>w.pct));
+  if (avgMes === null) {
+    for (let mi = TODAY_MONTH_IDX - 1; mi >= 0 && avgMes === null; mi--) {
+      const v = avgOf(weeklyFechadas.filter(w => WEEK_MONTH[w.s] === MESES_PT[mi]).map(w=>w.pct));
+      if (v !== null) { avgMes = v; mesAtualNome = MESES_PT[mi]; }
+    }
+  }
+  const mesSub = mesAtualNome === mesVigenteNome
+    ? `${mesAtualNome}, semanas já fechadas até ${cutoffWeekKey}`
+    : `${mesAtualNome} (último mês fechado) — ${mesVigenteNome} ainda sem semana fechada`;
 
   // Card 2: todas as semanas fechadas do ano (desde janeiro).
   const avgAno = avgOf(weeklyFechadas.map(w=>w.pct));
 
   document.getElementById('ader-stats').innerHTML = `
-    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do mês</div><div class="evo-stat-val">${fmtPct1(avgMes)}${badge(avgMes)}</div><div class="evo-stat-sub">${mesAtualNome}, semanas já fechadas até ${cutoffWeekKey}</div></div>
+    <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do mês</div><div class="evo-stat-val">${fmtPct1(avgMes)}${badge(avgMes)}</div><div class="evo-stat-sub">${mesSub}</div></div>
     <div class="evo-stat"><div class="evo-stat-lbl">Aderência acumulada do ano</div><div class="evo-stat-val">${fmtPct1(avgAno)}${badge(avgAno)}</div><div class="evo-stat-sub">desde ${MESES_PT[0]} até ${cutoffWeekKey} (última semana fechada)</div></div>`;
 
   const weekTable = document.getElementById('ader-week-table');
