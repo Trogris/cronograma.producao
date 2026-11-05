@@ -737,7 +737,7 @@
       </div>
 
       <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <span>Carga acima da capacidade</span>
+        <span>Capacidade da equipe e contratação</span>
         <span style="display:flex;gap:4px">
           <button class="btn btn-sm" id="cap-carga-prev" onclick="setCargaBase('prev')">Programado</button>
           <button class="btn btn-sm" id="cap-carga-real" onclick="setCargaBase('real')">Realizado</button>
@@ -749,16 +749,10 @@
         <div id="cap-sobrecarga" style="overflow-x:auto"></div>
         <div class="cap-chart-legend" id="cap-sobrecarga-legend"></div>
       </div>
-
-      <div class="section-title">Detalhe por mês — HH programadas por tipo e capacidade da equipe</div>
-      <div class="cap-table-wrap">
-        <table id="cap-carga-table"></table>
-      </div>
-
-      <div class="section-title">Equipe, jornada e HH por unidade</div>
-      <div class="cap-chart-card">
-        <div id="cap-hh-inputs"></div>
-      </div>
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:11px;color:var(--text-muted)">Parâmetros da equipe (férias, rendimento, simulação de contratação)</summary>
+        <div class="cap-chart-card" style="margin-top:8px"><div id="cap-hh-inputs"></div></div>
+      </details>
     </div>
 
     <!-- ABA EVOLUÇÃO -->
@@ -1772,22 +1766,26 @@ ${resumo}`;
     <span class="leg"><span class="leg-dot-line" style="border-top-color:var(--red)"></span>Limite de capacidade (100%)</span>${cortadas ? `<span style="font-size:10.5px;color:var(--text-muted)">${cortadas} semana(s) passam de ${TETO}% (barra cortada; valor exato ao passar o mouse)</span>` : ''}`;
 }
 
-// ── ANÁLISE DE CARGA ACIMA DA CAPACIDADE (equipe única, em HH) ──
-// A capacidade "un/sem" de cada tipo é o que a EQUIPE INTEIRA entrega numa semana
-// se trabalhar só naquele tipo. Logo, 1 unidade do tipo T consome
-//     HH/un. = HH da equipe por semana ÷ capacidade do tipo (un/sem)
-// e toda semana divide as mesmas HH entre os tipos. Por semana:
-//     HH programadas = Σ (unidades do tipo × HH/un. do tipo)
-//     HH acima       = max(0, HH programadas − HH da equipe na semana)
-//     % acima        = HH acima ÷ HH da equipe (semanas com produção)
+// ── CAPACIDADE DA EQUIPE E NECESSIDADE DE CONTRATAÇÃO ──
+// A equipe é uma só: a capacidade de cada tipo (un/sem) é o máximo com a equipe
+// de referência inteira nele. Então, por semana:
+//     ocupação  = Σ (unidades do tipo ÷ capacidade do tipo)      (1 = 100%)
+//     demanda   = ocupação × HH da equipe de referência por semana
+//     capacidade = HH de referência × (equipe com contratações ÷ referência) × fator de férias
+//     estouro   = max(0, demanda − capacidade)                    (semana a semana)
+// HH = horas de uma pessoa "média" da equipe de referência. Um funcionário novo
+// equivale a (horas dele no período ÷ produtividade média da equipe) HH.
 // Só projetos em carteira. "Programado" = Previsto (ano todo); "Realizado" = produzido
-// até a última semana fechada.
+// até a última semana fechada, com apoio da manutenção e hora extra.
 let capCargaBase = 'prev'; // 'prev' | 'real'
 function setCargaBase(m) { capCargaBase = m; renderCapacidade(); }
 
-// Equipe e jornada (editável; fica salvo no navegador)
-const EQUIPE_KEY = 'ft_equipe';
-const EQUIPE_PADRAO = { lider: 1, liderMonta: 0, tecnicos: 4, auxiliares: 5, apoio: 2.5, extra: 0, entrada: '08:12', saida: '18:00', almoco: 60, pausas: 60, dias: 5 };
+const EQUIPE_KEY = 'ft_equipe2';
+const EQUIPE_PADRAO = {
+  lider: 1, liderMonta: 100, tecnicos: 4, auxiliares: 5, rendTec: 1.2, ferias: 30,
+  entrada: '08:12', saida: '18:00', almoco: 60, pausas: 60, dias: 5,
+  apoio: 2.5, extra: 0, novosTec: 0, novosAux: 0,
+};
 let EQUIPE = Object.assign({}, EQUIPE_PADRAO);
 try { Object.assign(EQUIPE, JSON.parse(localStorage.getItem(EQUIPE_KEY) || '{}')); } catch (e) { /* mantém o padrão */ }
 function setEquipe(campo, el) {
@@ -1797,62 +1795,32 @@ function setEquipe(campo, el) {
 }
 function resetEquipe() { EQUIPE = Object.assign({}, EQUIPE_PADRAO); localStorage.removeItem(EQUIPE_KEY); renderCapacidade(); }
 function minutosDe(hhmm) { const p = String(hhmm).split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); }
-function equipeCalc() {
-  // O líder técnico tem função técnica/administrativa: só entra na capacidade de
-  // montagem na proporção do tempo que ajuda (liderMonta, % — padrão 0).
-  const lider = (+EQUIPE.lider || 0) * Math.min(100, Math.max(0, +EQUIPE.liderMonta || 0)) / 100;
-  const pessoas = lider + (+EQUIPE.tecnicos || 0) + (+EQUIPE.auxiliares || 0);
-  const brutoMin = Math.max(0, minutosDe(EQUIPE.saida) - minutosDe(EQUIPE.entrada));
-  const liqMin = Math.max(0, brutoMin - (+EQUIPE.almoco || 0) - (+EQUIPE.pausas || 0));
-  const horasSem = (liqMin / 60) * (+EQUIPE.dias || 0);
-  // capHH = equipe padrão (base do HH por unidade). capRealHH = o que de fato
-  // houve nas semanas realizadas: apoio da manutenção interna + hora extra.
-  const apoio = Math.max(0, +EQUIPE.apoio || 0), extra = Math.max(0, +EQUIPE.extra || 0);
-  return { pessoas, brutoMin, liqMin, horasSem, apoio, extra, capHH: pessoas * horasSem, capRealHH: (pessoas + apoio) * (horasSem + extra) };
-}
 const fmtHM = min => `${Math.floor(min / 60)}h${String(Math.round(min % 60)).padStart(2, '0')}`;
-
-// HH por unidade: padrão = HH da equipe/semana ÷ capacidade do tipo; o usuário pode sobrescrever.
-const HH_KEY = 'ft_hh_un';
-let HH_UN = {};
-try { HH_UN = JSON.parse(localStorage.getItem(HH_KEY) || '{}'); } catch (e) { HH_UN = {}; }
-function hhOf(t) {
-  if (typeof HH_UN[t] === 'number' && HH_UN[t] > 0) return HH_UN[t];
-  return equipeCalc().capHH / capOf(t);
-}
-function setHH(tipo, el) {
-  const v = parseFloat(String(el.value).replace(',', '.'));
-  if (isNaN(v) || v <= 0) delete HH_UN[tipo]; else HH_UN[tipo] = Math.round(v * 100) / 100;
-  localStorage.setItem(HH_KEY, JSON.stringify(HH_UN));
-  renderCapacidade();
-}
-
-function calcCarga(bt, ate, capHH) {
-  const tipos = TIPOS_ALL.filter(t => bt[t] && Object.values(bt[t]).some(v => v > 0));
-  const vazio = () => ({ hh: 0, cap: 0, exc: 0, semProd: 0, semAcima: 0 });
-  const cel = {}; tipos.forEach(t => { cel[t] = MESES_PT.map(() => ({ hh: 0 })); });
-  const tot = MESES_PT.map(vazio);
-  SEMANAS.forEach((s, i) => {
-    if (i + 1 > ate) return;
-    const mi = MESES_PT.indexOf(WEEK_MONTH[s]);
-    let carga = 0;
-    tipos.forEach(t => { const hh = (bt[t][s] || 0) * hhOf(t); cel[t][mi].hh += hh; carga += hh; });
-    if (carga <= 0) return;
-    const ex = Math.max(0, carga - capHH), T = tot[mi];
-    T.hh += carga; T.cap += capHH; T.exc += ex; T.semProd++; if (ex > 0) T.semAcima++;
-  });
-  const somaTot = lista => lista.reduce((a, o) => { Object.keys(a).forEach(k => { a[k] += o[k]; }); return a; }, vazio());
-  const ano = {}; tipos.forEach(t => { ano[t] = { hh: cel[t].reduce((a, o) => a + o.hh, 0) }; });
-  return { tipos, cel, tot, ano, totAno: somaTot(tot), capHH };
+function equipeCalc() {
+  const E = EQUIPE, rend = Math.max(0.1, +E.rendTec || 1);
+  const lider = (+E.lider || 0) * Math.min(100, Math.max(0, +E.liderMonta || 0)) / 100;
+  const pessoasRef = lider + (+E.tecnicos || 0) + (+E.auxiliares || 0);
+  const aeRef = (lider + (+E.tecnicos || 0)) * rend + (+E.auxiliares || 0); // "auxiliares equivalentes"
+  const brutoMin = Math.max(0, minutosDe(E.saida) - minutosDe(E.entrada));
+  const liqMin = Math.max(0, brutoMin - (+E.almoco || 0) - (+E.pausas || 0));
+  const hSem = (liqMin / 60) * (+E.dias || 0);
+  const f = Math.max(0, 1 - ((+E.ferias || 0) * 5 / 7) / 252); // 252 dias úteis/ano em 2026 (sem feriados nacionais)
+  const aeTime = aeRef + (+E.novosTec || 0) * rend + (+E.novosAux || 0);
+  return {
+    rend, pessoasRef, aeRef, aeTime, brutoMin, liqMin, hSem, f,
+    prodMedia: pessoasRef > 0 ? aeRef / pessoasRef : 1,
+    apoio: Math.max(0, +E.apoio || 0), extra: Math.max(0, +E.extra || 0),
+    novos: (+E.novosTec || 0) + (+E.novosAux || 0),
+  };
 }
 
 function renderCapSobrecarga(byTipo) {
   const statsEl = document.getElementById('cap-sobrecarga-stats');
   const host = document.getElementById('cap-sobrecarga');
-  const tbl = document.getElementById('cap-carga-table');
-  if (!statsEl || !host || !tbl) return;
+  if (!statsEl || !host) return;
   const fmt = v => (Math.round(v * 10) / 10).toLocaleString('pt-BR');
   const fmt0 = v => Math.round(v).toLocaleString('pt-BR');
+  const pes = v => Math.ceil(v - 1e-9); // gente é número inteiro: arredonda para cima (mínimo que cobre o estouro)
   const real = capCargaBase === 'real';
 
   const bBase = document.getElementById('cap-carga-prev'), bReal = document.getElementById('cap-carga-real');
@@ -1868,91 +1836,108 @@ function renderCapSobrecarga(byTipo) {
     });
   }
   const ate = real ? ATRASO_CUTOFF_WEEK : SEMANAS.length;
-  const eq = equipeCalc();
-  const c = calcCarga(bt, ate, real ? eq.capRealHH : eq.capHH);
   const cutoffKey = `S${String(ATRASO_CUTOFF_WEEK).padStart(2, '0')}`;
-  const pct = o => (o.cap > 0 ? (o.exc / o.cap) * 100 : null);
-  const ocup = o => (o.cap > 0 ? (o.hh / o.cap) * 100 : null);
+  const eq = equipeCalc();
+  const baseSem = eq.pessoasRef * eq.hSem;       // HH/semana da equipe de referência, 100%, sem férias
+  const mult = eq.aeRef > 0 ? eq.aeTime / eq.aeRef : 1;
+  const capSem = real
+    ? (eq.pessoasRef * mult * eq.f + eq.apoio / eq.prodMedia) * (eq.hSem + eq.extra)
+    : baseSem * mult * eq.f;
+  // HH que um funcionário novo (auxiliar) entrega por semana, já com férias
+  const hAuxSem = eq.hSem * eq.f / eq.prodMedia;
 
+  const sems = [];
+  SEMANAS.forEach((s, i) => {
+    if (i + 1 > ate) return;
+    const occ = tiposUnicos.reduce((a, t) => a + ((bt[t] && bt[t][s]) || 0) / capOf(t), 0);
+    const load = occ * baseSem;
+    sems.push({ mes: MESES_PT.indexOf(WEEK_MONTH[s]), occ, load, exc: Math.max(0, load - capSem) });
+  });
+  const meses = MESES_PT.map((m, i) => {
+    const ws = sems.filter(w => w.mes === i);
+    return {
+      m, nSem: ws.length, load: ws.reduce((a, w) => a + w.load, 0), cap: ws.length * capSem,
+      exc: ws.reduce((a, w) => a + w.exc, 0), semAcima: ws.filter(w => w.exc > 0).length,
+      semProd: ws.filter(w => w.load > 0).length, func: ws.length ? ws.reduce((a, w) => a + w.exc, 0) / (ws.length * hAuxSem) : 0,
+    };
+  });
+  const ativas = sems.filter(w => w.load > 0);
+  const semPicos = ativas.filter(w => w.occ <= 3);       // pico = semana acima de 300% da equipe de referência
+  const excAno = sems.reduce((a, w) => a + w.exc, 0);
+  const semAcimaAno = sems.filter(w => w.exc > 0).length;
+  const ocupDe = lista => (lista.length && capSem > 0 ? (lista.reduce((a, w) => a + w.load, 0) / (lista.length * capSem)) * 100 : null);
+  const ocupMedia = ocupDe(ativas), ocupSemPicos = ocupDe(semPicos);
+  const funcAno = sems.length ? excAno / (sems.length * hAuxSem) : 0;
+  const pior = meses.reduce((a, o) => (o.exc > (a ? a.exc : 0) ? o : a), null);
+  // contratação para cobrir a média das semanas sem picos
+  const demSemPicos = semPicos.length ? semPicos.reduce((a, w) => a + w.occ, 0) / semPicos.length : 0;
+  const aeNecessario = eq.f > 0 ? (eq.aeRef * demSemPicos) / eq.f : 0;
+  const falta = Math.max(0, aeNecessario - eq.aeTime);
+
+  const equipeTxt = eq.novos > 0 ? ' (equipe simulada)' : '';
   document.getElementById('cap-sobrecarga-intro').innerHTML =
-    `${real ? `Produzido até ${cutoffKey}` : 'Produção programada'} em horas (HH). A equipe tem <b>${fmt0(c.capHH)} HH por semana</b> ` +
-    (real && (eq.apoio > 0 || eq.extra > 0)
-      ? `(${fmt(eq.pessoas)} na montagem + ${fmt(eq.apoio)} de apoio da manutenção) × (${fmt(eq.horasSem)} h + ${fmt(eq.extra)} h extra). `
-      : `(${fmt(eq.pessoas)} pessoas na montagem × ${fmt(eq.horasSem)} h). `) +
-    ` <b>% acima</b> = HH que passaram da capacidade ÷ HH da equipe nas semanas com produção.`;
+    `${real ? `Produzido até ${cutoffKey}` : 'Produção programada'} contra a capacidade da equipe${equipeTxt}: <b>${fmt0(capSem)} HH por semana</b>` +
+    `${real && (eq.apoio > 0 || eq.extra > 0) ? ', com apoio da manutenção e hora extra' : ''}, já descontadas as férias. ` +
+    `<b>Estouro</b> = horas que passam da capacidade, semana a semana.`;
 
   // ---- cards ----
-  const meses = c.tot.map((o, i) => ({ m: MESES_PT[i], o, p: pct(o) }));
-  const comProd = meses.filter(x => x.o.semProd > 0);
-  const acima = comProd.filter(x => x.o.exc > 0);
-  const pior = comProd.reduce((a, x) => (a === null || (x.p || 0) > (a.p || 0) ? x : a), null);
-  const pAno = pct(c.totAno);
-  statsEl.innerHTML = [
-    `<div class="evo-stat ${c.totAno.exc > 0 ? 'gap-neg' : 'gap-pos'}"><div class="evo-stat-lbl">Média do ano</div><div class="evo-stat-val">${pAno === null ? '—' : fmt(pAno) + '%'}</div><div class="evo-stat-sub">acima da capacidade · ocupação média ${ocup(c.totAno) === null ? '—' : fmt(ocup(c.totAno)) + '%'}</div></div>`,
-    `<div class="evo-stat ${c.totAno.exc > 0 ? 'gap-neg' : 'gap-pos'}"><div class="evo-stat-lbl">HH acima da capacidade (ano)</div><div class="evo-stat-val">${fmt0(c.totAno.exc)} HH</div><div class="evo-stat-sub">${c.totAno.semAcima} de ${c.totAno.semProd} semanas com produção</div></div>`,
-    `<div class="evo-stat ${acima.length ? 'gap-neg' : 'gap-pos'}"><div class="evo-stat-lbl">Meses acima da capacidade</div><div class="evo-stat-val">${acima.length} de ${comProd.length}</div><div class="evo-stat-sub">meses com pelo menos uma semana acima</div></div>`,
-    pior ? `<div class="evo-stat gap-neg"><div class="evo-stat-lbl">Mês mais pesado: ${pior.m}</div><div class="evo-stat-val">${pior.p === null ? '—' : fmt(pior.p) + '%'}</div><div class="evo-stat-sub">${fmt0(pior.o.exc)} HH acima · ${pior.o.semAcima} de ${pior.o.semProd} semanas</div></div>` : '',
-  ].join('');
+  const cls = v => (v > 0 ? 'gap-neg' : 'gap-pos');
+  const card = (lbl, val, sub, c) => `<div class="evo-stat ${c || ''}"><div class="evo-stat-lbl">${lbl}</div><div class="evo-stat-val">${val}</div><div class="evo-stat-sub">${sub}</div></div>`;
+  const cards = [];
+  cards.push(card('Ocupação média', ocupMedia === null ? '—' : fmt0(ocupMedia) + '%',
+    `${ocupSemPicos === null ? '' : 'sem os picos (>300%): ' + fmt0(ocupSemPicos) + '% · '}${semAcimaAno} de ${ativas.length} semanas acima`, ocupMedia > 100 ? 'gap-neg' : 'gap-pos'));
+  cards.push(card('Estouro no ano', fmt0(excAno) + ' HH', `≈ ${pes(funcAno)} funcionários para cobrir tudo, picos incluídos`, cls(excAno)));
+  cards.push(real
+    ? card('Capacidade real por semana', fmt0(capSem) + ' HH', `referência: ${fmt0(baseSem)} HH (com apoio e hora extra)`, '')
+    : card('Contratação necessária', falta > 0 ? `+${pes(falta)} aux.` : 'nenhuma',
+        falta > 0 ? `ou +${pes(falta / eq.rend)} técnicos, para cobrir a média sem os picos` : 'a equipe cobre a média sem os picos', cls(falta)));
+  cards.push(pior
+    ? card(`Mês mais pesado: ${pior.m}`, fmt0(pior.exc) + ' HH', `≈ ${pes(pior.func)} funcionários · ${pior.semAcima} de ${pior.semProd} semanas acima`, 'gap-neg')
+    : card('Mês mais pesado', '—', 'nenhum mês acima da capacidade', 'gap-pos'));
+  statsEl.innerHTML = cards.join('');
 
-  // ---- gráfico: % acima da capacidade por mês ----
-  const W = 1040, H = 170, padL = 8, padR = 12, padT = 12, baseY = 132;
+  // ---- gráfico: horas demandadas x capacidade por mês ----
+  const W = 1040, H = 200, padL = 8, padR = 12, padT = 12, baseY = 158;
   const bw = (W - padL - padR) / 12;
-  const maxV = Math.max(...meses.map(x => x.p || 0), 1);
+  const maxV = Math.max(...meses.map(o => Math.max(o.load, o.cap)), 1) * 1.08;
+  const yv = v => baseY - (v / maxV) * (baseY - padT);
   let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><line class="evo-grid-line" x1="${padL}" y1="${baseY}" x2="${W - padR}" y2="${baseY}"/>`;
-  meses.forEach(({ m, o, p }, i) => {
-    const cx = padL + i * bw + bw / 2, atual = i === TODAY_MONTH_IDX, x0 = (cx - bw * 0.26).toFixed(1), w = (bw * 0.52).toFixed(1);
-    svg += `<text x="${cx.toFixed(1)}" y="${baseY + 17}" text-anchor="middle" class="evo-axis-label" style="${atual ? 'font-weight:700;fill:var(--accent)' : ''}">${m}</text>`;
-    if (p === null) { svg += `<text x="${cx.toFixed(1)}" y="${baseY + 32}" text-anchor="middle" class="evo-axis-label">—</text>`; return; }
-    if (o.exc > 0) {
-      const h = (p / maxV) * (baseY - padT);
-      svg += `<rect x="${x0}" y="${(baseY - h).toFixed(1)}" width="${w}" height="${h.toFixed(1)}" rx="2" fill="var(--red)" opacity="${atual ? 1 : 0.8}"><title>${m}: ${fmt(p)}% acima da capacidade · ${fmt0(o.exc)} HH acima · ${o.semAcima} de ${o.semProd} semanas · ocupação ${fmt(ocup(o))}%</title></rect>`;
-      svg += `<text x="${cx.toFixed(1)}" y="${baseY + 32}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--red)">${fmt(p)}%</text>`;
-    } else {
-      svg += `<rect x="${x0}" y="${baseY - 3}" width="${w}" height="3" rx="1.5" fill="var(--green)" opacity="0.8"><title>${m}: dentro da capacidade · ocupação ${fmt(ocup(o))}%</title></rect>`;
-      svg += `<text x="${cx.toFixed(1)}" y="${baseY + 32}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--text-muted)">0%</text>`;
-    }
+  meses.forEach((o, i) => {
+    const cx = padL + i * bw + bw / 2, atual = i === TODAY_MONTH_IDX;
+    const x0 = (cx - bw * 0.26).toFixed(1), w = (bw * 0.52).toFixed(1);
+    svg += `<text x="${cx.toFixed(1)}" y="${baseY + 16}" text-anchor="middle" class="evo-axis-label" style="${atual ? 'font-weight:700;fill:var(--accent)' : ''}">${o.m}</text>`;
+    if (!o.nSem) { svg += `<text x="${cx.toFixed(1)}" y="${baseY + 31}" text-anchor="middle" class="evo-axis-label">—</text>`; return; }
+    const atend = Math.max(0, o.load - o.exc);
+    const tip = `${o.m}: demanda ${fmt0(o.load)} HH · capacidade ${fmt0(o.cap)} HH · estouro ${fmt0(o.exc)} HH (≈ ${pes(o.func)} funcionários) · ${o.semAcima} de ${o.semProd} semanas acima`;
+    if (atend > 0) svg += `<rect x="${x0}" y="${yv(atend).toFixed(1)}" width="${w}" height="${(baseY - yv(atend)).toFixed(1)}" rx="2" fill="var(--accent)" opacity="0.75"><title>${tip}</title></rect>`;
+    if (o.exc > 0) svg += `<rect x="${x0}" y="${yv(o.load).toFixed(1)}" width="${w}" height="${(yv(atend) - yv(o.load)).toFixed(1)}" rx="2" fill="var(--red)" opacity="${atual ? 1 : 0.85}"><title>${tip}</title></rect>`;
+    svg += `<line x1="${(cx - bw * 0.4).toFixed(1)}" y1="${yv(o.cap).toFixed(1)}" x2="${(cx + bw * 0.4).toFixed(1)}" y2="${yv(o.cap).toFixed(1)}" stroke="var(--text)" stroke-width="1.75" stroke-dasharray="4 3" opacity="0.75"/>`;
+    svg += o.exc > 0
+      ? `<text x="${cx.toFixed(1)}" y="${baseY + 31}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--red)">≈ ${pes(o.func)} func.</text>`
+      : `<text x="${cx.toFixed(1)}" y="${baseY + 31}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:var(--text-muted)">ok</text>`;
   });
   host.innerHTML = svg + '</svg>';
   document.getElementById('cap-sobrecarga-legend').innerHTML = `
-    <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>% acima da capacidade da equipe no mês</span>
-    <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>Dentro da capacidade</span>`;
+    <span class="leg"><span class="leg-dot" style="background:var(--accent);opacity:.75"></span>Dentro da capacidade</span>
+    <span class="leg"><span class="leg-dot" style="background:var(--red)"></span>Estouro (acima da capacidade)</span>
+    <span class="leg"><span class="leg-dot-line" style="border-top-color:var(--text)"></span>Capacidade da equipe no mês</span>
+    <span style="font-size:10.5px;color:var(--text-muted)">"≈ N func." = auxiliares novos que cobririam o estouro do mês (1 auxiliar = ${fmt(hAuxSem * 4.33)} HH por mês); técnico rende ${fmt(eq.rend)}×.</span>`;
 
-  // ---- tabela: HH programadas por tipo e mês + totais ----
-  let h = `<thead><tr><th class="tipo-col">Tipo</th><th class="cap-col">HH/un.</th>${MESES_PT.map(m => `<th>${m}</th>`).join('')}<th style="border-left:1px solid var(--border)">Ano</th></tr></thead><tbody>`;
-  c.tipos.forEach(t => {
-    h += `<tr><td class="tipo-col">${chipTipo(t)}</td><td class="cap-col">${fmt(hhOf(t))}</td>${c.cel[t].map(o => `<td>${o.hh > 0 ? fmt0(o.hh) : ''}</td>`).join('')}<td style="border-left:1px solid var(--border);font-weight:700">${fmt0(c.ano[t].hh)}</td></tr>`;
-  });
-  const lin = (rot, f, ano, cls = '') => `<tr class="total-row"><td class="tipo-col">${rot}</td><td class="cap-col"></td>${c.tot.map(o => `<td class="${cls}">${o.semProd ? f(o) : ''}</td>`).join('')}<td style="border-left:1px solid var(--border);font-weight:700">${ano}</td></tr>`;
-  const T = c.totAno;
-  h += lin('HH programadas', o => fmt0(o.hh), fmt0(T.hh));
-  h += lin('Capacidade da equipe (HH)', o => fmt0(o.cap), fmt0(T.cap));
-  h += lin('Ocupação', o => fmt(ocup(o)) + '%', T.cap ? fmt(ocup(T)) + '%' : '—');
-  h += lin('HH acima da capacidade', o => fmt0(o.exc), fmt0(T.exc));
-  h += lin('% acima da capacidade', o => (o.exc > 0 ? '+' : '') + fmt(pct(o)) + '%', pAno === null ? '—' : (pAno > 0 ? '+' : '') + fmt(pAno) + '%');
-  h += lin('Semanas acima / com produção', o => o.semAcima + '/' + o.semProd, `${T.semAcima}/${T.semProd}`);
-  tbl.innerHTML = h + '</tbody>';
-
-  // ---- equipe, jornada e HH por unidade ----
+  // ---- parâmetros da equipe (recolhido por padrão) ----
   const campo = (rot, id, val, extra = '') => `<label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-muted)">${rot}<input class="cap-edit-input" style="width:84px" ${extra} value="${val}" onchange="setEquipe('${id}', this)"></label>`;
+  const num = 'type="number" min="0" step="0.5"', int = 'type="number" min="0" step="1"';
   document.getElementById('cap-hh-inputs').innerHTML =
-    `<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">` +
-    campo('Líder técnico (não monta)', 'lider', EQUIPE.lider, 'type="number" min="0"') +
-    campo('% do líder na montagem', 'liderMonta', EQUIPE.liderMonta, 'type="number" min="0" max="100"') +
-    campo('Técnicos', 'tecnicos', EQUIPE.tecnicos, 'type="number" min="0"') +
-    campo('Auxiliares', 'auxiliares', EQUIPE.auxiliares, 'type="number" min="0"') +
-    campo('Entrada', 'entrada', EQUIPE.entrada, 'type="time"') +
-    campo('Saída', 'saida', EQUIPE.saida, 'type="time"') +
-    campo('Almoço (min)', 'almoco', EQUIPE.almoco, 'type="number" min="0"') +
-    campo('Pausas (min)', 'pausas', EQUIPE.pausas, 'type="number" min="0"') +
-    campo('Dias/semana', 'dias', EQUIPE.dias, 'type="number" min="0" max="7"') +
-    campo('Apoio da manutenção (pessoas)', 'apoio', EQUIPE.apoio, 'type="number" min="0" step="0.5"') +
-    campo('Hora extra (h/pessoa/semana)', 'extra', EQUIPE.extra, 'type="number" min="0" step="0.5"') +
+    `<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px">` +
+    campo('Líder técnico', 'lider', EQUIPE.lider, int) + campo('% do líder montando', 'liderMonta', EQUIPE.liderMonta, 'type="number" min="0" max="100"') +
+    campo('Técnicos', 'tecnicos', EQUIPE.tecnicos, int) + campo('Auxiliares', 'auxiliares', EQUIPE.auxiliares, int) +
+    campo('Técnico rende (× aux.)', 'rendTec', EQUIPE.rendTec, num) + campo('Férias (dias corridos)', 'ferias', EQUIPE.ferias, num) +
+    campo('Entrada', 'entrada', EQUIPE.entrada, 'type="time"') + campo('Saída', 'saida', EQUIPE.saida, 'type="time"') +
+    campo('Almoço (min)', 'almoco', EQUIPE.almoco, num) + campo('Pausas (min)', 'pausas', EQUIPE.pausas, num) + campo('Dias/semana', 'dias', EQUIPE.dias, 'type="number" min="0" max="7"') +
+    campo('Apoio manutenção (pessoas)', 'apoio', EQUIPE.apoio, num) + campo('Hora extra (h/pessoa/sem.)', 'extra', EQUIPE.extra, num) +
+    campo('Simular: técnicos novos', 'novosTec', EQUIPE.novosTec, int) + campo('Simular: auxiliares novos', 'novosAux', EQUIPE.novosAux, int) +
     `<button class="btn btn-sm" style="align-self:flex-end" onclick="resetEquipe()">Restaurar padrão</button></div>` +
-    `<div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">Jornada ${EQUIPE.entrada}–${EQUIPE.saida} = ${fmtHM(eq.brutoMin)} − ${fmtHM(+EQUIPE.almoco || 0)} almoço − ${fmtHM(+EQUIPE.pausas || 0)} pausas = <b>${fmtHM(eq.liqMin)} por dia</b> × ${EQUIPE.dias} dias = ${fmt(eq.horasSem)} h por pessoa × ${fmt(eq.pessoas)} pessoas na montagem = <b>${fmt0(eq.capHH)} HH por semana</b>. No <b>Realizado</b> a capacidade soma o apoio e a hora extra: (${fmt(eq.pessoas)} + ${fmt(eq.apoio)}) × (${fmt(eq.horasSem)} + ${fmt(eq.extra)}) h = <b>${fmt0(eq.capRealHH)} HH por semana</b>. As HH por unidade seguem a equipe padrão.</div>` +
-    `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">HH por unidade de cada tipo = ${fmt0(eq.capHH)} HH ÷ capacidade do tipo (un/sem). Pode ajustar se o tempo real for diferente:</div>` +
-    `<div style="display:flex;flex-wrap:wrap;gap:10px">` +
-    TIPOS_ALL.filter(t => tiposUnicos.includes(t)).map(t => `<label style="display:flex;align-items:center;gap:6px;font-size:12px">${chipTipo(t)}<input type="number" min="0" step="0.5" class="cap-edit-input" style="width:78px" value="${typeof HH_UN[t] === 'number' ? HH_UN[t] : ''}" placeholder="${fmt(eq.capHH / capOf(t))}" onchange="setHH('${t}', this)"></label>`).join('') +
-    `</div>`;
+    `<div style="font-size:11px;color:var(--text-muted)">Jornada ${EQUIPE.entrada}–${EQUIPE.saida}: ${fmtHM(eq.liqMin)} produtivas por dia × ${EQUIPE.dias} dias = ${fmt(eq.hSem)} h por pessoa por semana. ` +
+    `A capacidade informada por tipo vale para a equipe atual (${fmt(eq.pessoasRef)} pessoas ≈ ${fmt(eq.aeRef)} auxiliares equivalentes) sem férias; as férias reduzem em ${fmt((1 - eq.f) * 100)}%.</div>`;
 }
 
 // ── EVOLUÇÃO (previsto x realizado) ──
